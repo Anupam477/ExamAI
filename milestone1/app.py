@@ -23,7 +23,8 @@ st.sidebar.caption("Milestone 1 Deliverables")
 selected_task = st.sidebar.radio(
     "Navigate Tasks:",
     [
-        "Task 4: Interactive Exam & Evaluation (MCQ + Q&A)",
+        "Task 5: Multimodal Exam (Handwritten Image OCR + AI Evaluation)",
+        "Task 4: Interactive Descriptive Q&A Examination & Evaluation",
         "Task 3: Interactive Exam & Evaluation Screen",
         "Task 2: AI MCQ Generator",
         "Task 1: Multi-Model LLM Integration",
@@ -31,7 +32,14 @@ selected_task = st.sidebar.radio(
     index=0,
 )
 
-if selected_task == "Task 4: Interactive Exam & Evaluation (MCQ + Q&A)":
+if selected_task == "Task 5: Multimodal Exam (Handwritten Image OCR + AI Evaluation)":
+    try:
+        from task5 import main as task5_main
+    except ImportError:
+        from milestone1.task5 import main as task5_main
+    task5_main()
+
+elif selected_task == "Task 4: Interactive Descriptive Q&A Examination & Evaluation":
     try:
         from task4 import main as task4_main
     except ImportError:

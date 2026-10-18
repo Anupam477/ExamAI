@@ -1,8 +1,8 @@
 """
 AI-Based Intelligent Examination Platform
-Milestone 1 - Task 4: Interactive Q&A Examination & AI Evaluation Suite (Pro Ultra Edition)
-Supports MCQs, Q&A (Short Answer / Descriptive), and Mixed Mode Assessments with
-Multidimensional AI-Powered Semantic Grading, Concept Checklists, and AI Re-Write Coaching.
+Milestone 1 - Task 4: Interactive Descriptive Q&A Examination & AI Evaluation Suite
+Supports MCQs, Descriptive Q&A (Written Technical Answers), and Mixed Mode Assessments with
+Multidimensional AI Semantic Grading (Accuracy, Completeness, Clarity, Application) and Correct Answer Diagnostics.
 """
 
 import base64
@@ -1391,200 +1391,35 @@ def render_taking_view():
                         st.rerun()
 
             else:  # "qa"
-                st.caption(f"Write your response below or attach an image. (Recommended: {q.get('recommended_words', '40–90 words')})")
+                st.caption(f"Type your written response below. (Recommended: {q.get('recommended_words', '40–90 words')})")
 
                 text_key = f"t4_text_{session_id}_{idx}"
-                sync_key = f"sync_text_{session_id}_{idx}"
-
-                if sync_key in st.session_state:
-                    st.session_state[text_key] = st.session_state.pop(sync_key)
-                elif text_key not in st.session_state:
+                if text_key not in st.session_state:
                     st.session_state[text_key] = saved_val if saved_val is not None else ""
 
-                if saved_img:
-                    # Side-by-side verification workspace
+                written_text = st.text_area(
+                    label=f"Your Answer for Q{idx + 1}",
+                    value=st.session_state[text_key],
+                    height=130,
+                    placeholder="Type your explanation or technical answer here...",
+                    key=text_key,
+                    label_visibility="collapsed",
+                )
+                st.session_state.task4_user_answers[idx] = written_text
+
+                words = len(written_text.strip().split()) if written_text.strip() else 0
+                c_info, c_clr = st.columns([3, 1])
+                with c_info:
                     st.markdown(
-                        f"""
-                        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; margin-bottom: 8px;">
-                            <span style="font-size: 0.82rem; color: var(--text);">
-                                Attached: <strong>{saved_img.get('name', 'Image')}</strong>
-                            </span>
-                            <span class="ocr-badge ocr-badge-success">OCR Extracted</span>
-                        </div>
-                        """,
+                        f"<small style='color: var(--text-muted);'>{words} words</small>",
                         unsafe_allow_html=True,
                     )
-
-                    c_img, c_edit = st.columns([1, 1.4])
-
-                    with c_img:
-                        st.markdown("<small style='font-weight: 600; color: var(--text-muted); text-transform: uppercase;'>Attached Image</small>", unsafe_allow_html=True)
-                        st.image(
-                            saved_img["bytes"],
-                            caption=saved_img.get('name', 'Image'),
-                            use_container_width=True,
-                        )
-
-                        with st.expander("Inspect Image"):
-                            st.image(
-                                saved_img["bytes"],
-                                caption=saved_img.get('name', 'Full Image'),
-                                use_container_width=True,
-                            )
-
-                        c_rep, c_del = st.columns([1.2, 1])
-                        with c_rep:
-                            with st.popover("Replace"):
-                                rep_file = st.file_uploader(
-                                    f"Choose Image (Q{idx + 1})",
-                                    type=["png", "jpg", "jpeg", "webp"],
-                                    key=f"rep_file_{session_id}_{idx}",
-                                )
-                                if rep_file is not None:
-                                    f_b = rep_file.getvalue()
-                                    f_h = hashlib.md5(f_b).hexdigest()
-                                    if f_h != saved_img.get("hash"):
-                                        with st.spinner("Extracting text..."):
-                                            m_t = rep_file.type or "image/jpeg"
-                                            new_txt = extract_text_from_image_bytes(f_b, mime_type=m_t)
-                                            st.session_state.task4_user_images[idx] = {
-                                                "bytes": f_b,
-                                                "mime_type": m_t,
-                                                "name": rep_file.name,
-                                                "extracted_text": new_txt,
-                                                "hash": f_h,
-                                            }
-                                            st.session_state[sync_key] = new_txt
-                                            st.session_state.task4_user_answers[idx] = new_txt
-                                            st.rerun()
-
-                        with c_del:
-                            if st.button("Remove", key=f"del_img_{session_id}_{idx}", type="secondary", use_container_width=True):
-                                del st.session_state.task4_user_images[idx]
-                                st.rerun()
-
-                    with c_edit:
-                        ocr_content = saved_img.get("extracted_text", "")
-                        w_count = len(ocr_content.split()) if ocr_content else 0
-                        st.markdown(
-                            f"""
-                            <div class="image-ocr-portion" style="margin-top: 0; margin-bottom: 8px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                    <span class="ocr-badge">Extracted Text</span>
-                                    <span style="font-size: 0.74rem; color: var(--text-muted);">{w_count} words</span>
-                                </div>
-                                <div class="ocr-text-box" style="max-height: 130px; overflow-y: auto;">
-                                    {ocr_content}
-                                </div>
-                            </div>
-                            """,
-                            unsafe_allow_html=True,
-                        )
-
-                        b1, b2 = st.columns(2)
-                        with b1:
-                            if st.button("Reset to OCR", key=f"sync_ocr_{session_id}_{idx}", type="secondary", use_container_width=True):
-                                st.session_state[sync_key] = ocr_content
-                                st.session_state.task4_user_answers[idx] = ocr_content
-                                st.rerun()
-                        with b2:
-                            if st.button("Append to Answer", key=f"append_ocr_{session_id}_{idx}", type="secondary", use_container_width=True):
-                                cur_t = st.session_state.task4_user_answers.get(idx) or ""
-                                combined = (cur_t + "\n\n" + ocr_content).strip()
-                                st.session_state[sync_key] = combined
-                                st.session_state.task4_user_answers[idx] = combined
-                                st.rerun()
-
-                        st.markdown(
-                            """
-                            <div style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin: 6px 0 2px 0;">
-                                Your Answer:
-                            </div>
-                            """,
-                            unsafe_allow_html=True,
-                        )
-
-                        written_text = st.text_area(
-                            label=f"Answer for Q{idx + 1}",
-                            height=130,
-                            placeholder="Type or edit your answer here...",
-                            key=text_key,
-                            label_visibility="collapsed",
-                        )
-                        st.session_state.task4_user_answers[idx] = written_text
-
-                        words = len(written_text.strip().split()) if written_text.strip() else 0
-                        c_info, c_clr = st.columns([3, 1])
-                        with c_info:
-                            st.markdown(
-                                f"<small style='color: var(--text-muted);'>{words} words</small>",
-                                unsafe_allow_html=True,
-                            )
-                        with c_clr:
-                            if written_text.strip():
-                                if st.button("Clear", key=f"clear_qa_{session_id}_{idx}", type="secondary"):
-                                    st.session_state.task4_user_answers[idx] = ""
-                                    st.session_state[sync_key] = ""
-                                    st.rerun()
-
-                else:
-                    written_text = st.text_area(
-                        label=f"Your Answer for Q{idx + 1}",
-                        height=120,
-                        placeholder="Type your answer here...",
-                        key=text_key,
-                        label_visibility="collapsed",
-                    )
-                    st.session_state.task4_user_answers[idx] = written_text
-
-                    words = len(written_text.strip().split()) if written_text.strip() else 0
-                    c_info, c_clr = st.columns([3, 1])
-                    with c_info:
-                        st.markdown(
-                            f"<small style='color: var(--text-muted);'>{words} words</small>",
-                            unsafe_allow_html=True,
-                        )
-                    with c_clr:
-                        if written_text.strip():
-                            if st.button("Clear", key=f"clear_qa_{session_id}_{idx}", type="secondary"):
-                                st.session_state.task4_user_answers[idx] = ""
-                                st.session_state[sync_key] = ""
-                                st.rerun()
-
-                    with st.expander("Attach Image (Handwritten / Notes)", expanded=False):
-                        st.caption("Upload a photo of your notes. AI Vision will extract the text for you to review and edit.")
-                        col_f, col_c = st.columns([1.3, 1])
-                        with col_f:
-                            uploaded_file = st.file_uploader(
-                                f"Upload Image (Q{idx + 1})",
-                                type=["png", "jpg", "jpeg", "webp"],
-                                key=f"qa_uploader_{session_id}_{idx}",
-                            )
-                        with col_c:
-                            with st.popover("Webcam Photo"):
-                                cam_file = st.camera_input(
-                                    f"Camera for Q{idx + 1}",
-                                    key=f"qa_cam_{session_id}_{idx}",
-                                )
-
-                        active_file = uploaded_file or cam_file
-                        if active_file is not None:
-                            file_bytes = active_file.getvalue()
-                            file_hash = hashlib.md5(file_bytes).hexdigest()
-
-                            with st.spinner("Extracting text from image..."):
-                                mime_type = active_file.type or "image/jpeg"
-                                transcribed_text = extract_text_from_image_bytes(file_bytes, mime_type=mime_type)
-                                st.session_state.task4_user_images[idx] = {
-                                    "bytes": file_bytes,
-                                    "mime_type": mime_type,
-                                    "name": getattr(active_file, "name", f"camera_snap_Q{idx+1}.jpg"),
-                                    "extracted_text": transcribed_text,
-                                    "hash": file_hash,
-                                }
-                                st.session_state[sync_key] = transcribed_text
-                                st.session_state.task4_user_answers[idx] = transcribed_text
-                                st.rerun()
+                with c_clr:
+                    if written_text.strip():
+                        if st.button("Clear Response", key=f"clear_qa_{session_id}_{idx}", type="secondary"):
+                            st.session_state.task4_user_answers[idx] = ""
+                            st.session_state[text_key] = ""
+                            st.rerun()
 
     st.divider()
 
