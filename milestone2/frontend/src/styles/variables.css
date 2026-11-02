@@ -1,0 +1,90 @@
+/* ==========================================================================
+   ExamAI Design Tokens & Variables
+   Strictly adheres to specified design system:
+   No gold/yellow. Playfair Display (headings) & Inter (body).
+   ========================================================================== */
+
+:root {
+  /* Core Color Palette */
+  --navy-900: #0B1B33;
+  --navy-800: #102444;
+  --navy-700: #18335C;
+  --bg: #F7F9FC;
+  --surface: #FFFFFF;
+  --surface-alt: #F0F4FA;
+  --text: #14233C;
+  --text-muted: #5F6B7D;
+  --primary: #2D5BD0;
+  --primary-hover: #2347A8;
+  --primary-glow: rgba(45, 91, 208, 0.28);
+  --platinum: #C9D1DC;
+  --border: #E1E6EE;
+  --border-light: #EEF2F7;
+  --success: #2F7D5B;
+  --success-bg: #E3F1EC;
+  --error: #B8433F;
+  --error-bg: #FDF2F2;
+
+  /* Role Accents */
+  --role-student-accent: #2D5BD0;
+  --role-student-accent-hover: #2347A8;
+  --role-student-bg: #E6EDFB;
+  --role-student-text: #2347A8;
+  --role-student-border: #BFD0F3;
+  --role-student-ring: rgba(45, 91, 208, 0.25);
+
+  --role-teacher-accent: #0E6B58;
+  --role-teacher-accent-hover: #0a5243;
+  --role-teacher-bg: #E3F1EC;
+  --role-teacher-text: #0E6B58;
+  --role-teacher-border: #B7DACD;
+  --role-teacher-ring: rgba(14, 107, 88, 0.25);
+
+  --role-admin-accent: #22262E;
+  --role-admin-accent-hover: #14171C;
+  --role-admin-bg: #E9EAEC;
+  --role-admin-text: #22262E;
+  --role-admin-border: #CDD0D5;
+  --role-admin-ring: rgba(34, 38, 46, 0.25);
+
+  /* AI Badge Colors */
+  --badge-ai-bg: #0B1B33;
+  --badge-ai-text: #9DB6F5;
+  --badge-ai-border: #23375C;
+
+  /* Typography */
+  --font-heading: 'Playfair Display', Georgia, serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Font Scales */
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.84375rem; /* 13.5px */
+  --text-base: 0.9375rem;/* 15px */
+  --text-md: 1.0625rem;  /* 17px */
+  --text-lg: 1.25rem;    /* 20px */
+  --text-xl: 1.5rem;     /* 24px */
+  --text-2xl: 1.875rem;  /* 30px */
+  --text-3xl: 2.375rem;  /* 38px */
+  --text-4xl: 3.125rem;  /* 50px */
+
+  /* Elevation / Shadows */
+  --shadow-xs: 0 1px 2px 0 rgba(11, 27, 51, 0.04);
+  --shadow-sm: 0 2px 6px -1px rgba(11, 27, 51, 0.05);
+  --shadow-card: 0 4px 14px -2px rgba(11, 27, 51, 0.06), 0 2px 6px -1px rgba(11, 27, 51, 0.03);
+  --shadow-card-hover: 0 16px 32px -6px rgba(11, 27, 51, 0.12), 0 4px 10px -2px rgba(11, 27, 51, 0.04);
+  --shadow-auth: 0 12px 32px -4px rgba(11, 27, 51, 0.08), 0 4px 12px -2px rgba(11, 27, 51, 0.04);
+  --shadow-hud: 0 24px 48px -12px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(201, 209, 220, 0.15);
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-pill: 9999px;
+
+  /* Transitions - hardware accelerated curves */
+  --transition-fast: 150ms cubic-bezier(0.2, 0, 0, 1);
+  --transition-normal: 220ms cubic-bezier(0.2, 0, 0, 1);
+  --transition-smooth: 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}

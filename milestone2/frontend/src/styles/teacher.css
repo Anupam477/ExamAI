@@ -1,0 +1,826 @@
+/* ==========================================================================
+   ExamAI Teacher Console & Assessment Wizard Styling
+   Matches pixel-perfect teacher panel from design specification
+   Modern Sans-serif typography, compact SaaS density, and emerald accents
+   ========================================================================== */
+
+:root {
+  --tp-bg: #F8FAFB;
+  --tp-surface: #FFFFFF;
+  --tp-surface-hover: #F9FBFC;
+  --tp-text-primary: #111827;
+  --tp-text-secondary: #374151;
+  --tp-text-muted: #6B7280;
+  --tp-border: #E5E7EB;
+  --tp-border-light: #F3F4F6;
+  
+  /* Brand Green Palette */
+  --tp-green-primary: #237356;
+  --tp-green-hover: #1A5B44;
+  --tp-green-light: #EAF7EE;
+  --tp-green-border: #A8DAB5;
+  --tp-green-text: #14532D;
+  --tp-green-ring: rgba(35, 115, 86, 0.18);
+
+  --tp-sidebar-width: 240px;
+  --tp-header-height: 60px;
+}
+
+/* Dark Theme Overrides */
+[data-teacher-theme="dark"] {
+  --tp-bg: #0B111A;
+  --tp-surface: #121A26;
+  --tp-surface-hover: #182333;
+  --tp-text-primary: #F9FAFB;
+  --tp-text-secondary: #D1D5DB;
+  --tp-text-muted: #9CA3AF;
+  --tp-border: #1E293B;
+  --tp-border-light: #16202E;
+
+  --tp-green-primary: #2BA078;
+  --tp-green-hover: #228463;
+  --tp-green-light: #102B21;
+  --tp-green-border: #1E503E;
+  --tp-green-text: #4ADE80;
+  --tp-green-ring: rgba(74, 222, 128, 0.2);
+}
+
+[data-teacher-theme="dark"] .teacher-textarea.focus-highlight {
+  background-color: #13241E !important;
+  color: #F9FAFB !important;
+  border-color: #2BA078 !important;
+}
+
+
+/* Base Layout & Typography (Enforce Sans-serif across Teacher Console) */
+.teacher-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--tp-bg);
+  color: var(--tp-text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+.teacher-layout h1,
+.teacher-layout h2,
+.teacher-layout h3,
+.teacher-layout h4,
+.teacher-layout h5,
+.teacher-layout h6,
+.teacher-card-title,
+.teacher-logo-text {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  letter-spacing: -0.015em;
+}
+
+/* ==========================================================================
+   1. Compact Sleek Sidebar
+   ========================================================================== */
+.teacher-sidebar {
+  width: var(--tp-sidebar-width);
+  background-color: var(--tp-surface);
+  border-right: 1px solid var(--tp-border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 1.15rem 0.85rem;
+  z-index: 30;
+  box-sizing: border-box;
+}
+
+.teacher-logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  padding: 0.25rem 0.5rem 1.25rem 0.5rem;
+}
+
+.teacher-logo-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #237356 0%, #16A34A 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(35, 115, 86, 0.25);
+}
+
+.teacher-logo-text {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--tp-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.teacher-nav-group {
+  margin-bottom: 1.1rem;
+}
+
+.teacher-nav-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--tp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.25rem 0.65rem 0.45rem;
+}
+
+.teacher-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.55rem 0.75rem;
+  border-radius: 7px;
+  color: var(--tp-text-secondary);
+  font-size: 0.84375rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 140ms ease;
+  margin-bottom: 2px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  width: 100%;
+  box-sizing: border-box;
+  background: none;
+  text-align: left;
+}
+
+.teacher-nav-link:hover {
+  background-color: var(--tp-surface-hover);
+  color: var(--tp-text-primary);
+}
+
+.teacher-nav-link.active {
+  background-color: var(--tp-green-light);
+  color: var(--tp-green-text);
+  font-weight: 600;
+  border: 1px solid var(--tp-green-border);
+}
+
+.teacher-nav-link.active svg {
+  color: var(--tp-green-primary);
+}
+
+/* Sidebar Footer Card */
+.teacher-portal-card {
+  background-color: var(--tp-green-light);
+  border: 1px solid var(--tp-green-border);
+  border-radius: 10px;
+  padding: 0.85rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.teacher-portal-card-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background-color: var(--tp-green-primary);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+
+.teacher-portal-card-title {
+  font-size: 0.78125rem;
+  font-weight: 700;
+  color: var(--tp-green-text);
+  margin-bottom: 1px;
+}
+
+.teacher-portal-card-desc {
+  font-size: 0.7rem;
+  color: var(--tp-text-muted);
+  line-height: 1.35;
+}
+
+/* ==========================================================================
+   2. Main Header
+   ========================================================================== */
+.teacher-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.teacher-header {
+  height: var(--tp-header-height);
+  background-color: var(--tp-surface);
+  border-bottom: 1px solid var(--tp-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.75rem;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.teacher-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.teacher-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.15rem;
+}
+
+.teacher-theme-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--tp-border);
+  background: var(--tp-surface);
+  color: var(--tp-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.teacher-theme-btn:hover {
+  background-color: var(--tp-surface-hover);
+  color: var(--tp-text-primary);
+}
+
+.teacher-user-pill {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 20px;
+  transition: background 140ms ease;
+}
+
+.teacher-user-pill:hover {
+  background-color: var(--tp-surface-hover);
+}
+
+.teacher-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #237356;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.78125rem;
+  letter-spacing: 0.04em;
+}
+
+.teacher-user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.teacher-user-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--tp-text-primary);
+  line-height: 1.2;
+}
+
+.teacher-user-role {
+  font-size: 0.7rem;
+  color: var(--tp-text-muted);
+}
+
+/* ==========================================================================
+   3. Wizard Stepper Bar
+   ========================================================================== */
+.teacher-wizard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1.75rem 3.5rem 1.75rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.teacher-step-guide {
+  font-size: 0.875rem;
+  color: var(--tp-text-muted);
+  margin-bottom: 1.25rem;
+  font-weight: 400;
+}
+
+.teacher-stepper-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+
+.teacher-step-pill {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0.55rem 1.15rem;
+  border-radius: 9999px;
+  background-color: var(--tp-surface);
+  border: 1px solid var(--tp-border);
+  color: var(--tp-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.teacher-step-pill:hover:not(.active) {
+  border-color: #C5CCD6;
+  background-color: var(--tp-surface-hover);
+}
+
+.teacher-step-pill.active {
+  background-color: var(--tp-green-light);
+  border: 1.5px solid var(--tp-green-border);
+  color: var(--tp-green-text);
+  font-weight: 600;
+}
+
+.teacher-step-pill.completed {
+  border-color: var(--tp-green-border);
+  color: var(--tp-text-primary);
+}
+
+.teacher-step-num {
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background-color: var(--tp-border);
+  color: var(--tp-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.teacher-step-pill.active .teacher-step-num {
+  background-color: var(--tp-green-primary);
+  color: #FFFFFF;
+}
+
+.teacher-step-pill.completed .teacher-step-num {
+  background-color: var(--tp-green-primary);
+  color: #FFFFFF;
+}
+
+/* Preset Quick Chips Bar */
+.teacher-presets-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+  padding: 0.6rem 0.85rem;
+  background-color: var(--tp-surface);
+  border: 1px solid var(--tp-border);
+  border-radius: 8px;
+}
+
+.teacher-preset-chip {
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid var(--tp-border);
+  background: var(--tp-surface);
+  color: var(--tp-text-secondary);
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.teacher-preset-chip:hover {
+  background-color: var(--tp-green-light);
+  border-color: var(--tp-green-border);
+  color: var(--tp-green-text);
+}
+
+.teacher-preset-chip.active {
+  background-color: var(--tp-green-light);
+  border-color: var(--tp-green-primary);
+  color: var(--tp-green-primary);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   4. Step 1: Details & Rules Two-Column Layout (Precise Fit)
+   ========================================================================== */
+.teacher-create-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.teacher-card {
+  background-color: var(--tp-surface);
+  border: 1px solid var(--tp-border);
+  border-radius: 12px;
+  padding: 1.35rem 1.6rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.teacher-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--tp-text-primary);
+  margin-bottom: 0.15rem;
+}
+
+.teacher-card-desc {
+  font-size: 0.78125rem;
+  color: var(--tp-text-muted);
+  margin-bottom: 1.15rem;
+}
+
+/* Form Controls with Compact Spacing */
+.teacher-form-group {
+  margin-bottom: 0.95rem;
+}
+
+.teacher-label {
+  display: block;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  color: var(--tp-text-primary);
+  margin-bottom: 0.35rem;
+}
+
+.teacher-input,
+.teacher-select,
+.teacher-textarea {
+  width: 100%;
+  padding: 0.55rem 0.8rem;
+  border-radius: 7px;
+  border: 1px solid #DCE2EA;
+  background-color: var(--tp-surface);
+  color: var(--tp-text-primary);
+  font-size: 0.84375rem;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: all 140ms ease;
+}
+
+.teacher-input:focus,
+.teacher-select:focus,
+.teacher-textarea:focus {
+  outline: none;
+  border-color: var(--tp-green-primary);
+  box-shadow: 0 0 0 3px var(--tp-green-ring);
+}
+
+.teacher-textarea {
+  min-height: 54px;
+  height: 54px;
+  resize: vertical;
+}
+
+.teacher-textarea.focus-highlight {
+  border: 1.5px solid var(--tp-green-primary);
+  background-color: #FAFCFA;
+  box-shadow: 0 0 0 2px var(--tp-green-ring);
+}
+
+.teacher-helper-text {
+  font-size: 0.7rem;
+  color: var(--tp-text-muted);
+  margin-top: 0.3rem;
+}
+
+.teacher-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+.teacher-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.85rem;
+}
+
+/* ==========================================================================
+   5. Rules & Integrity Cards with Toggles
+   ========================================================================== */
+.teacher-rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.teacher-rule-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0.95rem;
+  border-radius: 10px;
+  border: 1px solid var(--tp-border);
+  background-color: var(--tp-surface);
+  transition: all 150ms ease;
+}
+
+.teacher-rule-row:hover {
+  border-color: var(--tp-green-border);
+  box-shadow: 0 2px 6px rgba(35, 115, 86, 0.05);
+}
+
+.teacher-rule-info {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  flex: 1;
+  padding-right: 12px;
+}
+
+.teacher-rule-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  background-color: var(--tp-green-light);
+  color: var(--tp-green-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.teacher-rule-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--tp-text-primary);
+  margin-bottom: 1px;
+}
+
+.teacher-rule-desc {
+  font-size: 0.7rem;
+  color: var(--tp-text-muted);
+  line-height: 1.35;
+}
+
+/* Switch Toggle Component */
+.teacher-switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.teacher-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.teacher-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #E5E7EB;
+  border-radius: 22px;
+  transition: 180ms ease;
+}
+
+.teacher-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #FFFFFF;
+  border-radius: 50%;
+  transition: 180ms ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.teacher-switch input:checked + .teacher-slider {
+  background-color: var(--tp-green-primary);
+}
+
+.teacher-switch input:checked + .teacher-slider:before {
+  transform: translateX(20px);
+}
+
+/* Primary CTA Button */
+.teacher-btn-primary {
+  width: 100%;
+  padding: 0.7rem 1.2rem;
+  border-radius: 8px;
+  background-color: var(--tp-green-primary);
+  color: #FFFFFF;
+  border: none;
+  font-size: 0.84375rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  box-shadow: 0 2px 6px rgba(35, 115, 86, 0.2);
+}
+
+.teacher-btn-primary:hover {
+  background-color: var(--tp-green-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(35, 115, 86, 0.3);
+}
+
+.teacher-btn-secondary {
+  padding: 0.6rem 1rem;
+  border-radius: 7px;
+  background-color: var(--tp-surface);
+  color: var(--tp-text-primary);
+  border: 1px solid var(--tp-border);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.teacher-btn-secondary:hover {
+  background-color: var(--tp-surface-hover);
+  border-color: #C5CCD6;
+}
+
+.teacher-subnote {
+  font-size: 0.7rem;
+  color: var(--tp-text-muted);
+  text-align: center;
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 980px) {
+  .teacher-create-grid {
+    grid-template-columns: 1fr;
+  }
+  .teacher-sidebar {
+    width: 68px;
+    padding: 0.85rem 0.4rem;
+  }
+  .teacher-logo-text,
+  .teacher-nav-label,
+  .teacher-nav-link span,
+  .teacher-portal-card-desc,
+  .teacher-portal-card-title {
+    display: none;
+  }
+  .teacher-portal-card {
+    padding: 0.4rem;
+    justify-content: center;
+  }
+  .teacher-stepper-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .teacher-stepper-bar {
+    grid-template-columns: 1fr;
+  }
+  .teacher-grid-2,
+  .teacher-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Marks Stepper Controls */
+.teacher-stepper-control {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--tp-border);
+  border-radius: 6px;
+  background-color: var(--tp-surface);
+  overflow: hidden;
+  height: 28px;
+}
+
+.teacher-stepper-btn {
+  width: 28px;
+  height: 28px;
+  background: var(--tp-surface-hover);
+  border: none;
+  color: var(--tp-text-primary);
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 140ms ease;
+  user-select: none;
+  padding: 0;
+}
+
+.teacher-stepper-btn:hover:not(:disabled) {
+  background-color: var(--tp-green-light);
+  color: var(--tp-green-text);
+}
+
+.teacher-stepper-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.teacher-stepper-val {
+  padding: 0 6px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--tp-text-primary);
+  min-width: 32px;
+  text-align: center;
+  user-select: none;
+}
+
+.teacher-stepper-input {
+  width: 36px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--tp-text-primary);
+  outline: none;
+  padding: 0;
+  -moz-appearance: textfield;
+}
+
+.teacher-stepper-input::-webkit-outer-spin-button,
+.teacher-stepper-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.teacher-stepper-chip {
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: 1px solid var(--tp-border);
+  background: var(--tp-surface);
+  color: var(--tp-text-secondary);
+  cursor: pointer;
+  transition: all 120ms ease;
+  line-height: 1.3;
+}
+
+.teacher-stepper-chip:hover {
+  border-color: var(--tp-green-primary);
+  color: var(--tp-green-primary);
+  background-color: var(--tp-green-light);
+}
+
+.teacher-stepper-chip.active {
+  border-color: var(--tp-green-primary);
+  background-color: var(--tp-green-light);
+  color: var(--tp-green-primary);
+  font-weight: 700;
+}
+
+.teacher-stepper-chip.negative.active {
+  border-color: #EF4444;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #DC2626;
+  font-weight: 700;
+}
+
+
