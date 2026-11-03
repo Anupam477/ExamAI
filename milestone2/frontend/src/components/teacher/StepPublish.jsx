@@ -122,6 +122,9 @@ export default function StepPublish({ formData, onSaveDraft, onPublish, onBack, 
             <div style={{ fontSize: '0.84375rem', color: 'var(--tp-text-secondary)', marginTop: '2px' }}>
               Subject: <strong>{formData.subject}</strong> &bull; Topic: <strong>{formData.topic}</strong>
             </div>
+            <div style={{ fontSize: '0.84375rem', color: 'var(--tp-green-primary)', marginTop: '4px', fontWeight: 600 }}>
+              Faculty: <strong>{formData.instructor || 'Course Faculty'}</strong> {formData.instructorRole ? `(${formData.instructorRole})` : ''}
+            </div>
           </div>
 
           <div>

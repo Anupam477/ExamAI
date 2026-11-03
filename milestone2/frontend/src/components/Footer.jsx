@@ -75,17 +75,17 @@ export default function Footer() {
               </p>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <li>
-                  <Link to="/login/student" style={{ fontSize: '0.875rem', color: '#5F6B7D', textDecoration: 'none' }}>
+                  <Link to="/login/student" target="_blank" rel="noreferrer" style={{ fontSize: '0.875rem', color: '#5F6B7D', textDecoration: 'none' }}>
                     Student portal
                   </Link>
                 </li>
                 <li>
-                  <Link to="/login/teacher" style={{ fontSize: '0.875rem', color: '#5F6B7D', textDecoration: 'none' }}>
+                  <Link to="/login/teacher" target="_blank" rel="noreferrer" style={{ fontSize: '0.875rem', color: '#5F6B7D', textDecoration: 'none' }}>
                     Teacher portal
                   </Link>
                 </li>
                 <li>
-                  <Link to="/login/admin" style={{ fontSize: '0.875rem', color: '#5F6B7D', textDecoration: 'none' }}>
+                  <Link to="/login/admin" target="_blank" rel="noreferrer" style={{ fontSize: '0.875rem', color: '#5F6B7D', textDecoration: 'none' }}>
                     Admin console
                   </Link>
                 </li>

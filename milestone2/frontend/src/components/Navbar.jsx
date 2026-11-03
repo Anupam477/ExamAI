@@ -102,6 +102,8 @@ export default function Navbar() {
         >
           <Link
             to="/login/admin"
+            target="_blank"
+            rel="noreferrer"
             style={{
               fontSize: '0.875rem',
               fontWeight: 500,
@@ -119,6 +121,8 @@ export default function Navbar() {
 
           <Link
             to="/login/teacher"
+            target="_blank"
+            rel="noreferrer"
             style={{
               fontSize: '0.875rem',
               fontWeight: 600,
@@ -145,6 +149,8 @@ export default function Navbar() {
 
           <Link
             to="/login/student"
+            target="_blank"
+            rel="noreferrer"
             style={{
               fontSize: '0.875rem',
               fontWeight: 600,
@@ -217,6 +223,8 @@ export default function Navbar() {
         >
           <Link
             to="/login/student"
+            target="_blank"
+            rel="noreferrer"
             onClick={() => setMobileMenuOpen(false)}
             style={{
               fontSize: '0.9375rem',
@@ -233,6 +241,8 @@ export default function Navbar() {
           </Link>
           <Link
             to="/login/teacher"
+            target="_blank"
+            rel="noreferrer"
             onClick={() => setMobileMenuOpen(false)}
             style={{
               fontSize: '0.9375rem',
@@ -250,6 +260,8 @@ export default function Navbar() {
           </Link>
           <Link
             to="/login/admin"
+            target="_blank"
+            rel="noreferrer"
             onClick={() => setMobileMenuOpen(false)}
             style={{
               fontSize: '0.9375rem',

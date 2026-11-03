@@ -312,7 +312,17 @@ export default function InteractiveExamRunner({
           </div>
 
           {/* Submit Button */}
-          <button type="button" className="er-submit-btn" onClick={handleFinalSubmit}>
+          <button
+            type="button"
+            className="er-submit-btn"
+            onClick={handleFinalSubmit}
+            style={{
+              background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+              border: '1px solid #047857',
+              color: '#FFFFFF',
+              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)',
+            }}
+          >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <line x1="22" y1="2" x2="11" y2="13" />
               <polygon points="22 2 15 22 11 13 2 9 22 2" />
@@ -784,11 +794,53 @@ export default function InteractiveExamRunner({
             ) : (
               <button
                 type="button"
-                className="er-next-btn"
+                className="er-finalize-btn"
                 onClick={handleFinalSubmit}
-                style={{ backgroundColor: 'var(--sp-accent-emerald)' }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '0.65rem 1.65rem',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+                  border: '1px solid #047857',
+                  color: '#FFFFFF',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  letterSpacing: '0.015em',
+                  boxShadow: '0 4px 16px rgba(16, 185, 129, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                  transition: 'all 160ms cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #047857 0%, #059669 100%)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(16, 185, 129, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.35)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #059669 0%, #10B981 100%)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(16, 185, 129, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
+                }}
               >
-                Finalize &amp; Submit &rarr;
+                <div
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+                <span>Finalize &amp; Submit Exam</span>
+                <span style={{ fontSize: '1rem', marginLeft: '2px' }}>&rarr;</span>
               </button>
             )}
           </div>

@@ -127,7 +127,7 @@ export default function Landing() {
                 marginBottom: '4rem',
               }}
             >
-              <Link to="/login/student" style={{ textDecoration: 'none' }}>
+              <Link to="/login/student" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
                 <Button
                   variant="student"
                   style={{
@@ -144,7 +144,7 @@ export default function Landing() {
                 </Button>
               </Link>
 
-              <Link to="/login/teacher" style={{ textDecoration: 'none' }}>
+              <Link to="/login/teacher" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
                 <Button
                   variant="teacher"
                   style={{

@@ -212,6 +212,39 @@ export default function StepDetailsAndRules({ formData, onChange, onNext }) {
             </div>
           </div>
 
+          {/* Faculty / Instructor Attribution */}
+          <div className="teacher-grid-2 teacher-form-group">
+            <div>
+              <label className="teacher-label" htmlFor="test-instructor">Faculty / Instructor Name</label>
+              <input
+                id="test-instructor"
+                type="text"
+                className="teacher-input"
+                value={formData.instructor || ''}
+                onChange={(e) => handleTextChange('instructor', e.target.value)}
+                placeholder="e.g. Prof. Priya Sharma"
+              />
+              <div className="teacher-helper-text">
+                Shown to candidates on their examination cards and scorecards
+              </div>
+            </div>
+
+            <div>
+              <label className="teacher-label" htmlFor="test-instructor-role">Department / Faculty Designation</label>
+              <input
+                id="test-instructor-role"
+                type="text"
+                className="teacher-input"
+                value={formData.instructorRole || ''}
+                onChange={(e) => handleTextChange('instructorRole', e.target.value)}
+                placeholder="e.g. Department of Computer Science"
+              />
+              <div className="teacher-helper-text">
+                Department or role badge on student dashboard
+              </div>
+            </div>
+          </div>
+
           {/* Description */}
           <div className="teacher-form-group">
             <label className="teacher-label" htmlFor="test-desc">Description</label>

@@ -14,7 +14,7 @@ import InteractiveExamRunner from './InteractiveExamRunner';
 export default function StudentTestsView({ candidateUser, onShowToast, onNavigateTab }) {
   const [allTests, setAllTests] = useState(() => getStoredTeacherTests());
   const [submissions, setSubmissions] = useState(() =>
-    getStudentSubmissions(candidateUser?.id || candidateUser?.email || 'usr_002')
+    getStudentSubmissions(candidateUser)
   );
   const [examCodeInput, setExamCodeInput] = useState('');
   const [examCodeError, setExamCodeError] = useState('');
@@ -32,25 +32,25 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
   useEffect(() => {
     const handleSync = () => {
       setAllTests(getStoredTeacherTests());
-      setSubmissions(
-        getStudentSubmissions(candidateUser?.id || candidateUser?.email || 'usr_002')
-      );
+      setSubmissions(getStudentSubmissions(candidateUser));
     };
     window.addEventListener('examai_tests_updated', handleSync);
     window.addEventListener('examai_submissions_updated', handleSync);
+    window.addEventListener('examai_student_test_completed', handleSync);
     window.addEventListener('storage', handleSync);
     return () => {
       window.removeEventListener('examai_tests_updated', handleSync);
       window.removeEventListener('examai_submissions_updated', handleSync);
+      window.removeEventListener('examai_student_test_completed', handleSync);
       window.removeEventListener('storage', handleSync);
     };
   }, [candidateUser]);
 
-  // Assigned teacher tests (includes published exams and any test assigned by course faculty)
+  // Assigned teacher tests (shows ONLY tests published by teacher and assigned to this student)
   const assignedTests = useMemo(() => {
     return allTests.filter((t) => {
-      // Exclude archived tests only; show both published and teacher-assigned tests
-      if (t.status === 'archived') return false;
+      // Must be published! Drafts and archived are strictly excluded.
+      if (t.status !== 'published') return false;
       const isAssigned = isStudentAssignedToTest(t, candidateUser);
       const isManual = manuallyJoinedIds.includes(t.id);
       return isAssigned || isManual;
@@ -61,28 +61,45 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
   const getTestSubmission = (testId, testCode) => {
     return submissions.find(
       (s) =>
-        s.testId === testId ||
-        (testCode && s.testCode && s.testCode.toUpperCase() === testCode.toUpperCase())
+        (testId && s.testId === testId) ||
+        (testCode && s.testCode && s.testCode.toUpperCase() === String(testCode).toUpperCase())
     );
   };
 
   // Filtered view by tab
   const displayedTests = useMemo(() => {
     if (filterTab === 'completed') {
+      if (submissions.length > 0) {
+        return submissions.map((s) => {
+          const matchedTest = allTests.find((t) => t.id === s.testId || (s.testCode && t.code === s.testCode)) || {};
+          return {
+            ...matchedTest,
+            id: s.testId || s.id,
+            submissionId: s.id,
+            title: s.testTitle || matchedTest.title || 'Examination',
+            subject: s.subject || matchedTest.subject || 'Computer Science',
+            topic: s.topic || matchedTest.topic || '',
+            instructor: s.instructor || matchedTest.instructor || 'Course Faculty',
+            instructorRole: s.instructorRole || matchedTest.instructorRole || 'Course Faculty',
+            code: s.testCode || matchedTest.code || 'EXAM',
+            duration: matchedTest.duration || 30,
+            status: 'completed',
+            isCompleted: true,
+            submission: s,
+          };
+        });
+      }
       return assignedTests.filter((t) => !!getTestSubmission(t.id, t.code));
     }
     if (filterTab === 'open') {
       return assignedTests.filter((t) => !getTestSubmission(t.id, t.code));
     }
     return assignedTests;
-  }, [assignedTests, filterTab, submissions]);
+  }, [assignedTests, allTests, filterTab, submissions]);
 
   // Counts
-  const completedCount = useMemo(() => {
-    return assignedTests.filter((t) => !!getTestSubmission(t.id, t.code)).length;
-  }, [assignedTests, submissions]);
-
-  const openCount = Math.max(0, assignedTests.length - completedCount);
+  const completedCount = submissions.length;
+  const openCount = Math.max(0, assignedTests.length - assignedTests.filter((t) => !!getTestSubmission(t.id, t.code)).length);
 
   // Handle joining via exam code
   const handleJoinByCode = (e) => {
@@ -247,6 +264,8 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
       subject: activeExam.subject || 'Computer Science',
       topic: activeExam.topic || activeExam.title,
       difficulty: activeExam.difficulty || 'Medium',
+      instructor: activeExam.instructor || 'Course Faculty',
+      instructorRole: activeExam.instructorRole || 'Course Faculty',
       studentId: candidateUser?.id || 'usr_002',
       studentName: candidateUser?.fullName || candidateUser?.name || 'Test Student',
       studentEmail: candidateUser?.email || 'teststudent@gmail.com',
@@ -282,10 +301,14 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
   };
 
   const getInitials = (name) => {
-    if (!name) return 'FC';
-    const parts = name.replace(/^(Dr\.|Prof\.|Mr\.|Ms\.)\s*/i, '').trim().split(' ');
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    return (parts[0] || 'FC').slice(0, 2).toUpperCase();
+    if (!name || typeof name !== 'string') return 'CF';
+    const clean = name.replace(/^(Dr\.|Prof\.|Mr\.|Ms\.)\s*/i, '').trim();
+    if (!clean) return 'CF';
+    const parts = clean.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0][0] || ''}${parts[1][0] || ''}`.toUpperCase() || 'CF';
+    }
+    return clean.slice(0, 2).toUpperCase() || 'CF';
   };
 
   return (
@@ -404,7 +427,7 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
           className={`tt-subtab-btn ${filterTab === 'assigned' ? 'active' : ''}`}
           onClick={() => setFilterTab('assigned')}
         >
-          <span>👨‍🏫 Assigned by Teachers</span>
+          <span>👨‍🏫 To do</span>
           <span className="tt-subtab-count">{assignedTests.length}</span>
         </button>
         <button
@@ -412,7 +435,7 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
           className={`tt-subtab-btn ${filterTab === 'open' ? 'active' : ''}`}
           onClick={() => setFilterTab('open')}
         >
-          <span>⚡ Active &amp; Ready Now</span>
+          <span>⚡ Upcoming</span>
           <span className="tt-subtab-count">{openCount}</span>
         </button>
         <button
@@ -452,8 +475,32 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
             const submission = getTestSubmission(test.id, test.code);
             const totalMarks =
               test.questions?.reduce((acc, q) => acc + (Number(q.marks) || 5), 0) || 100;
-            const instructorName = test.instructor || 'Dr. Test Teacher';
-            const instructorRole = test.instructorRole || 'Course Faculty';
+
+            let instructorName = test.instructor || (submission ? submission.instructor : null);
+            let instructorRole = test.instructorRole || (submission ? submission.instructorRole : null);
+            if (
+              !instructorName ||
+              instructorName === 'Dr. Test Teacher' ||
+              instructorName === 'Authorized Instructor' ||
+              instructorName === candidateUser?.fullName ||
+              instructorName === candidateUser?.name ||
+              instructorName === 'Abhi Singh' ||
+              instructorName === 'Test Student'
+            ) {
+              if (test.instructorEmail) {
+                const prefix = test.instructorEmail.split('@')[0];
+                const parts = prefix.split(/[._-]/).filter(Boolean);
+                instructorName = parts.length > 0
+                  ? parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
+                  : 'Course Faculty';
+              } else {
+                instructorName = 'Course Faculty';
+              }
+              instructorRole = 'Course Faculty';
+            }
+            if (!instructorRole || instructorRole.includes('Year') || instructorRole.includes('Student')) {
+              instructorRole = 'Course Faculty';
+            }
             const initials = getInitials(instructorName);
 
             return (
@@ -722,9 +769,12 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
                       type="button"
                       className="sp-generate-btn"
                       style={{ flex: 1.4, padding: '0.45rem 0.75rem', fontSize: '0.78125rem', backgroundColor: '#059669' }}
-                      onClick={() => onNavigateTab('results')}
+                      onClick={() => {
+                        setExamResult(submission);
+                        setExamSubmitted(true);
+                      }}
                     >
-                      View Results &rarr;
+                      View Scorecard &rarr;
                     </button>
                   ) : (
                     <button
@@ -764,19 +814,49 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
             </div>
 
             <div className="sp-modal-body">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0.65rem 0.85rem', borderRadius: '8px', backgroundColor: 'var(--sp-surface-hover)', marginBottom: '1rem' }}>
-                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>
-                  {getInitials(selectedSyllabusTest.instructor)}
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: 'var(--sp-text-primary)' }}>
-                    {selectedSyllabusTest.instructor || 'Dr. Test Teacher'}
+              {(() => {
+                let syllabusInstructor = selectedSyllabusTest.instructor;
+                if (
+                  !syllabusInstructor ||
+                  syllabusInstructor === 'Dr. Test Teacher' ||
+                  syllabusInstructor === 'Authorized Instructor' ||
+                  syllabusInstructor === 'Abhi Singh' ||
+                  syllabusInstructor === candidateUser?.fullName ||
+                  syllabusInstructor === candidateUser?.name
+                ) {
+                  if (selectedSyllabusTest.instructorEmail) {
+                    const prefix = selectedSyllabusTest.instructorEmail.split('@')[0];
+                    const parts = prefix.split(/[._-]/).filter(Boolean);
+                    syllabusInstructor = parts.length > 0
+                      ? parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
+                      : 'Course Faculty';
+                  } else {
+                    syllabusInstructor = 'Course Faculty';
+                  }
+                }
+                const syllabusRole =
+                  selectedSyllabusTest.instructorRole &&
+                  !selectedSyllabusTest.instructorRole.includes('Year') &&
+                  !selectedSyllabusTest.instructorRole.includes('Student')
+                    ? selectedSyllabusTest.instructorRole
+                    : 'Course Faculty';
+
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0.65rem 0.85rem', borderRadius: '8px', backgroundColor: 'var(--sp-surface-hover)', marginBottom: '1rem' }}>
+                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>
+                      {getInitials(syllabusInstructor)}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.84375rem', fontWeight: 700, color: 'var(--sp-text-primary)' }}>
+                        {syllabusInstructor}
+                      </div>
+                      <div style={{ fontSize: '0.71875rem', color: 'var(--sp-text-muted)' }}>
+                        {syllabusRole}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: '0.71875rem', color: 'var(--sp-text-muted)' }}>
-                    {selectedSyllabusTest.instructorRole || 'Course Faculty'}
-                  </div>
-                </div>
-              </div>
+                );
+              })()}
 
               <h4 style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--sp-text-primary)', marginBottom: '6px' }}>
                 Instructions from Course Faculty
@@ -864,6 +944,11 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
 
             <div style={{ fontSize: '0.8125rem', color: 'var(--sp-text-secondary)', marginBottom: '1.5rem' }}>
               Score: <strong>{examResult.score}</strong> / {examResult.totalMarks} Marks &bull; Proctoring Clean (0% Suspicion)
+              {examResult.instructor && (
+                <div style={{ marginTop: '6px', fontSize: '0.78rem', color: 'var(--sp-text-muted)' }}>
+                  Evaluated under Faculty: <strong style={{ color: 'var(--sp-text-primary)' }}>{examResult.instructor}</strong>
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>

@@ -44,7 +44,8 @@ export const INITIAL_USERS = [
   },
   {
     id: 'usr_003',
-    name: 'Dr. Test Teacher',
+    name: 'Prof. Rajesh Sharma',
+    fullName: 'Prof. Rajesh Sharma',
     email: 'teacher@gmail.com',
     role: 'teacher',
     college: 'National Polytechnic College',
@@ -375,6 +376,7 @@ export async function mockLoginApi(role, credentials) {
     };
 
     sessionStorage.setItem('examai_auth_user', JSON.stringify(sessionUser));
+    localStorage.setItem('examai_auth_user', JSON.stringify(sessionUser));
 
     return {
       success: true,
@@ -385,17 +387,42 @@ export async function mockLoginApi(role, credentials) {
   }
 
   // Teacher or Admin role login
+  const users = getStoredUsers();
+  const cleanEmail = credentials.email.trim().toLowerCase();
+  const existingTeacher = users.find(
+    (u) => u.email?.trim().toLowerCase() === cleanEmail && u.role === role
+  ) || users.find(
+    (u) => u.email?.trim().toLowerCase() === cleanEmail
+  );
+
+  let teacherDisplayName = existingTeacher ? (existingTeacher.name || existingTeacher.fullName) : '';
+  let teacherRoleTitle = existingTeacher ? (existingTeacher.subDetails || existingTeacher.department || 'Course Faculty') : 'Course Faculty';
+
+  if (!teacherDisplayName) {
+    // Derive clean human name from email (e.g. "priya.sharma@domain.com" -> "Priya Sharma")
+    const emailPrefix = (credentials.email || '').split('@')[0];
+    const parts = emailPrefix.split(/[._-]/).filter(Boolean);
+    teacherDisplayName = parts.length > 0
+      ? parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
+      : 'Course Faculty';
+  }
+
   const mockUser = {
-    id: `usr_${Date.now()}`,
+    id: existingTeacher ? existingTeacher.id : `usr_${Date.now()}`,
     email: credentials.email,
     role: role,
-    fullName: role === 'admin' ? 'Institutional Administrator' : 'Authorized Instructor',
+    name: role === 'admin' ? 'Institutional Administrator' : teacherDisplayName,
+    fullName: role === 'admin' ? 'Institutional Administrator' : teacherDisplayName,
+    roleTitle: role === 'admin' ? 'System Administrator' : teacherRoleTitle,
+    department: existingTeacher?.department || 'Academic Department',
+    college: existingTeacher?.college || 'Institutional Faculty',
     token: `fake-jwt-token-examai-${role}-${Date.now()}`,
     authenticatedAt: new Date().toISOString(),
     status: 'approved',
   };
 
   sessionStorage.setItem('examai_auth_user', JSON.stringify(mockUser));
+  localStorage.setItem('examai_auth_user', JSON.stringify(mockUser));
 
   return {
     success: true,
@@ -411,24 +438,31 @@ export async function mockLoginApi(role, credentials) {
 export async function mockSignupApi(role, formData) {
   await new Promise((resolve) => setTimeout(resolve, ARTIFICIAL_DELAY_MS));
 
+  const newUserName = `${formData.firstName} ${formData.lastName}`.trim() || 'Course Faculty';
   const newUser = {
     id: `usr_${Date.now()}`,
-    name: `${formData.firstName} ${formData.lastName}`.trim(),
+    name: newUserName,
+    fullName: newUserName,
     email: formData.email.trim().toLowerCase(),
     role: role,
     college: formData.institute || 'Apex Institute of Technology',
-    identifier: formData.rollNumber || `ID-${Math.floor(1000 + Math.random() * 9000)}`,
-    subDetails: `${formData.classYear || '1 Year'} · ${formData.department || 'General'}`,
+    identifier: formData.rollNumber || (role === 'teacher' ? `FAC-${Math.floor(1000 + Math.random() * 9000)}` : `ID-${Math.floor(1000 + Math.random() * 9000)}`),
+    subDetails: role === 'teacher'
+      ? (formData.department ? `Department of ${formData.department}` : 'Course Faculty')
+      : `${formData.classYear || '1 Year'} · ${formData.department || 'General'}`,
+    roleTitle: role === 'teacher'
+      ? (formData.department ? `Department of ${formData.department}` : 'Course Faculty')
+      : 'Student Candidate',
     classYear: formData.classYear || '1 Year',
-    department: formData.department || 'Computer Science',
+    department: formData.department || (role === 'teacher' ? 'Academic Department' : 'Computer Science'),
     joined: new Date().toISOString().split('T')[0],
     joinedDisplay: 'Just now',
-    status: 'pending',
+    status: role === 'teacher' ? 'approved' : 'pending',
     active: true,
     rejectionReason: null,
-    adminNotes: 'Candidate registered through student portal.',
+    adminNotes: role === 'teacher' ? 'Faculty registered via teacher portal.' : 'Candidate registered through student portal.',
     avatarColor: role === 'teacher' ? '#0E6B58' : '#2D5BD0',
-    idProofUrl: 'DOC-STUDENT-UPLOAD',
+    idProofUrl: role === 'teacher' ? 'DOC-FACULTY-UPLOAD' : 'DOC-STUDENT-UPLOAD',
   };
 
   const users = getStoredUsers();
@@ -436,17 +470,19 @@ export async function mockSignupApi(role, formData) {
 
   return {
     success: true,
-    message: `Account created successfully for ${newUser.name}. Pending administrator approval.`,
+    message: role === 'teacher'
+      ? `Faculty account created for ${newUser.name}! You can now sign in.`
+      : `Account created successfully for ${newUser.name}. Pending administrator approval.`,
     user: newUser,
   };
 }
 
 /**
- * Retrieves the currently active mock session from sessionStorage
+ * Retrieves the currently active mock session from sessionStorage or localStorage
  */
 export function getActiveSession() {
   try {
-    const raw = sessionStorage.getItem('examai_auth_user');
+    const raw = sessionStorage.getItem('examai_auth_user') || localStorage.getItem('examai_auth_user');
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -458,6 +494,7 @@ export function getActiveSession() {
  */
 export function clearActiveSession() {
   sessionStorage.removeItem('examai_auth_user');
+  localStorage.removeItem('examai_auth_user');
 }
 
 /* ==========================================================================
@@ -470,7 +507,7 @@ export const INITIAL_TEACHER_TESTS = [
     title: 'Artificial Intelligence & Machine Learning',
     subject: 'Computer Science',
     topic: 'Deep Learning & Neural Networks',
-    instructor: 'Dr. Test Teacher',
+    instructor: 'Prof. Rajesh Sharma',
     instructorRole: 'Senior Lecturer · Mathematics & AI',
     description: 'Comprehensive midterm evaluation on deep neural network architectures, backpropagation gradients, and real-time computer vision proctoring.',
     instructions: 'Webcam proctoring is active throughout the session. Closed-book examination. Max 3 tab switches permitted.',
@@ -609,7 +646,7 @@ export const INITIAL_TEACHER_TESTS = [
     title: 'Data Structures & Algorithmic Analysis',
     subject: 'Computer Science',
     topic: 'Trees, Graphs, and Greedy Optimization',
-    instructor: 'Dr. Test Teacher',
+    instructor: 'Prof. Rajesh Sharma',
     instructorRole: 'Head of Assessment Curriculum',
     description: 'End-term practical examination covering self-balancing search trees, Dijkstra shortest paths, and dynamic programming memoization.',
     instructions: 'Webcam and full screen lockdown mandatory. Do not navigate away from test runner.',
@@ -664,63 +701,55 @@ export const INITIAL_TEACHER_TESTS = [
 export function getStoredTeacherTests() {
   try {
     const raw = localStorage.getItem('examai_teacher_tests');
-
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        // Sanitize existing stored tests:
-        // 1. Remove wildcards ('*', 'all', 'students') from assignedStudents
-        // 2. For default seed tests (test_001, test_002, test_003), reset assignedStudents to their strict seed roster
-        // 3. For custom tests created by teachers, retain assignedStudents chosen by the teacher
-        const sanitized = parsed.map((test) => {
-          const initMatch = INITIAL_TEACHER_TESTS.find((it) => it.id === test.id);
-          let assigned = Array.isArray(test.assignedStudents)
-            ? test.assignedStudents.filter((a) => {
-                const s = String(a).trim().toLowerCase();
-                return s && s !== '*' && s !== 'all' && s !== 'students' && s !== 'all students';
-              })
-            : [];
+      if (Array.isArray(parsed)) {
+        // Retain each test's specific authoring teacher while filtering out old placeholders
+        const normalized = parsed.map((t) => {
+          let inst = t.instructor;
+          let role = t.instructorRole;
 
-          if (initMatch) {
-            assigned = [...initMatch.assignedStudents];
+          // If instructor was a placeholder or student name, fallback to email prefix or Course Faculty
+          if (
+            !inst ||
+            inst === 'Dr. Test Teacher' ||
+            inst === 'Authorized Instructor' ||
+            inst === 'Abhi Singh' ||
+            inst === 'Test Student' ||
+            inst === 'Candidate'
+          ) {
+            if (t.instructorEmail) {
+              const prefix = t.instructorEmail.split('@')[0];
+              const parts = prefix.split(/[._-]/).filter(Boolean);
+              inst = parts.length > 0 ? parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ') : 'Course Faculty';
+            } else {
+              inst = 'Course Faculty';
+            }
+            role = 'Course Faculty';
+          }
+
+          if (
+            !role ||
+            role.includes('Year') ||
+            role.includes('Standard') ||
+            role.includes('Student')
+          ) {
+            role = 'Course Faculty';
           }
 
           return {
-            ...test,
-            assignedStudents: assigned,
+            ...t,
+            instructor: inst,
+            instructorRole: role,
           };
         });
-
-        // Ensure all initial tests exist in the list
-        INITIAL_TEACHER_TESTS.forEach((initTest) => {
-          const idx = sanitized.findIndex((t) => t.id === initTest.id);
-          if (idx === -1) {
-            sanitized.push(initTest);
-          } else {
-            sanitized[idx] = {
-              ...initTest,
-              ...sanitized[idx],
-              status: sanitized[idx].status || initTest.status || 'published',
-              instructor: sanitized[idx].instructor || initTest.instructor,
-              instructorRole: sanitized[idx].instructorRole || initTest.instructorRole,
-              assignedStudents: [...initTest.assignedStudents],
-            };
-          }
-        });
-
-        localStorage.setItem('examai_teacher_tests', JSON.stringify(sanitized));
-        return sanitized;
+        return normalized;
       }
     }
   } catch (e) {
     console.warn('Error reading teacher tests:', e);
   }
-  try {
-    localStorage.setItem('examai_teacher_tests', JSON.stringify(INITIAL_TEACHER_TESTS));
-  } catch {
-    // ignore
-  }
-  return INITIAL_TEACHER_TESTS;
+  return [];
 }
 
 
@@ -735,15 +764,44 @@ export function saveStoredTeacherTests(tests) {
 
 export function saveOrUpdateTeacherTest(testData) {
   const tests = getStoredTeacherTests();
+  const session = getActiveSession();
+  const isTeacher = session && (session.role === 'teacher' || session.role === 'faculty');
+  const currentFaculty = isTeacher ? (session.fullName || session.name || 'Course Faculty') : 'Course Faculty';
+  const currentRole = isTeacher ? (session.roleTitle || session.subDetails || 'Course Faculty') : 'Course Faculty';
+
+  let instructorToUse = testData.instructor;
+  if (
+    !instructorToUse ||
+    instructorToUse === 'Dr. Test Teacher' ||
+    instructorToUse === 'Authorized Instructor' ||
+    instructorToUse === 'Abhi Singh' ||
+    instructorToUse === 'Test Student'
+  ) {
+    instructorToUse = currentFaculty;
+  }
+
+  let roleToUse = testData.instructorRole;
+  if (!roleToUse || roleToUse.includes('Year') || roleToUse.includes('Student')) {
+    roleToUse = currentRole;
+  }
+
   const index = tests.findIndex((t) => t.id === testData.id);
   let updated;
   if (index >= 0) {
     updated = [...tests];
-    updated[index] = { ...updated[index], ...testData, updatedAt: new Date().toISOString() };
+    updated[index] = {
+      ...updated[index],
+      ...testData,
+      instructor: instructorToUse,
+      instructorRole: roleToUse,
+      updatedAt: new Date().toISOString(),
+    };
   } else {
     const newTest = {
       ...testData,
       id: testData.id || `test_${Date.now()}`,
+      instructor: instructorToUse,
+      instructorRole: roleToUse,
       createdAt: new Date().toISOString().split('T')[0],
       code: testData.code || `${(testData.subject || 'TEST').slice(0, 4).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
       status: testData.status || 'draft',
@@ -777,13 +835,22 @@ export function rescheduleTeacherTest(testId, scheduledStart, scheduledEnd) {
 
 /**
  * Checks if a test is assigned to a specific student
+ * Strictly ensures:
+ * 1. Test must be published (drafts are never shown to students)
+ * 2. Teacher must have assigned this test to the student (assignedStudents contains student id/email/name)
+ * 3. Tests with 0 assigned students are NOT shown
  */
 export function isStudentAssignedToTest(test, studentUser) {
   if (!test || !studentUser) return false;
 
+  // Draft or archived tests are strictly hidden from students
+  if (test.status !== 'published') return false;
+
   const assigned = test.assignedStudents;
-  // If assignedStudents is empty, the test is not assigned to anyone yet
-  if (!Array.isArray(assigned) || assigned.length === 0) return false;
+  // If assignedStudents is empty or missing, this test was NOT assigned to any student
+  if (!Array.isArray(assigned) || assigned.length === 0) {
+    return false;
+  }
 
   const sid = String(studentUser?.id || '').trim().toLowerCase();
   const semail = String(studentUser?.email || '').trim().toLowerCase();
@@ -798,9 +865,9 @@ export function isStudentAssignedToTest(test, studentUser) {
   return assigned.some((aid) => {
     if (!aid) return false;
     const a = String(aid).trim().toLowerCase();
-    // Exclude wildcards
+    // Wildcard matches all students only if explicitly set
     if (a === '*' || a === 'all' || a === 'students' || a === 'all students') {
-      return false;
+      return true;
     }
 
     return (
@@ -850,19 +917,34 @@ export function saveStudentSubmission(submission) {
 
 /**
  * Retrieves submissions for a student
+ * Robustly matches by student ID, email address, or full name
  */
-export function getStudentSubmissions(studentIdOrEmail) {
+export function getStudentSubmissions(candidate) {
   try {
     const raw = localStorage.getItem('examai_submissions');
     if (!raw) return [];
     const list = JSON.parse(raw);
-    if (!studentIdOrEmail) return list;
-    const clean = String(studentIdOrEmail).trim().toLowerCase();
-    return list.filter(
-      (s) =>
-        String(s.studentId || '').trim().toLowerCase() === clean ||
-        String(s.studentEmail || '').trim().toLowerCase() === clean
-    );
+    if (!Array.isArray(list)) return [];
+    if (!candidate) return list;
+
+    // Support candidate as user object or string ID / email
+    const idClean = String(candidate?.id || (typeof candidate === 'string' ? candidate : '')).trim().toLowerCase();
+    const emailClean = String(candidate?.email || (typeof candidate === 'string' && candidate.includes('@') ? candidate : '')).trim().toLowerCase();
+    const nameClean = String(candidate?.fullName || candidate?.name || '').trim().toLowerCase();
+
+    return list.filter((s) => {
+      const sId = String(s.studentId || '').trim().toLowerCase();
+      const sEmail = String(s.studentEmail || '').trim().toLowerCase();
+      const sName = String(s.studentName || '').trim().toLowerCase();
+
+      return (
+        (idClean && sId === idClean) ||
+        (emailClean && sEmail === emailClean) ||
+        (idClean && sEmail === idClean) ||
+        (emailClean && sId === emailClean) ||
+        (nameClean && sName && (sName === nameClean || nameClean.includes(sName)))
+      );
+    });
   } catch (e) {
     return [];
   }
@@ -877,6 +959,124 @@ export function generateAiQuestionsForTopic(topic, count = 3, difficulty = 'Medi
 
 
   const questionsDatabase = {
+    math: [
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'What condition on the discriminant D = b² - 4ac guarantees two distinct real roots for ax² + bx + c = 0?',
+        options: ['D > 0', 'D = 0', 'D < 0', 'D ≤ 0'],
+        correctOption: 0,
+        explanation: 'A strictly positive discriminant yields a non-zero real square root resulting in two distinct real roots.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'According to Vieta’s formulas, if α and β are the roots of 3x² - 12x + 9 = 0, what is the sum of the roots (α + β)?',
+        options: ['4  (-b/a = -(-12)/3 = 4)', '-4', '3', '12'],
+        correctOption: 0,
+        explanation: 'For ax² + bx + c = 0, the sum of roots is -b/a = 12/3 = 4.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'What are the real roots of the quadratic equation x² - 8x + 15 = 0?',
+        options: ['x = 3 and x = 5', 'x = -3 and x = -5', 'x = 1 and x = 15', 'x = 2 and x = 6'],
+        correctOption: 0,
+        explanation: 'Factoring (x - 3)(x - 5) = 0 gives roots x = 3 and x = 5.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'What is the x-coordinate of the vertex of the parabola y = 2x² - 8x + 11?',
+        options: ['x = 2  (-b / 2a = 8 / 4 = 2)', 'x = -2', 'x = 4', 'x = 1'],
+        correctOption: 0,
+        explanation: 'The vertex x-coordinate is -b/(2a) = -(-8)/(2*2) = 2.',
+      },
+      {
+        type: 'descriptive',
+        marks: 10,
+        title: 'Derive the quadratic formula x = (-b ± √(b² - 4ac)) / (2a) starting from ax² + bx + c = 0 by completing the square.',
+        rubric: 'Candidate must divide by a, move c/a to RHS, add (b/2a)² to both sides, factor LHS as a perfect square, and solve for x.',
+      },
+      {
+        type: 'descriptive',
+        marks: 10,
+        title: 'Discuss the geometric interpretation of the discriminant in terms of parabolic intersections with the Cartesian x-axis.',
+        rubric: 'Candidate should contrast D > 0 (two distinct intersections), D = 0 (tangent/single touchpoint), and D < 0 (no real intersection).',
+      },
+    ],
+    mechanics: [
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'According to Newton’s First Law of Motion, an object maintains constant velocity unless acted upon by:',
+        options: ['An unbalanced net external force', 'An internal thermodynamic gradient', 'A gravitational potential only', 'A continuous constant force equal to its mass'],
+        correctOption: 0,
+        explanation: 'Law of Inertia states net external force is required to alter velocity.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'Newton’s Second Law states that net force is fundamentally proportional to the rate of change of:',
+        options: ['Linear momentum (F = dp/dt)', 'Kinetic energy', 'Angular displacement', 'Mechanical power'],
+        correctOption: 0,
+        explanation: 'F_net = dp/dt. When mass is constant, dp/dt = m(dv/dt) = ma.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'Which statement is strictly true regarding Newton’s Third Law action-reaction force pairs?',
+        options: ['They act on two different interacting bodies simultaneously and never cancel each other', 'They act on the same body in opposite directions to establish equilibrium', 'Action force precedes reaction force by a slight time delay', 'The reaction force is smaller if the opposing object has greater mass'],
+        correctOption: 0,
+        explanation: 'Action and reaction forces act on different bodies and cannot cancel each other in a single free body diagram.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'A net horizontal force of 24 N accelerates an object at 6.0 m/s². What is the mass of the object?',
+        options: ['4.0 kg  (m = F/a = 24/6)', '144 kg', '0.25 kg', '18 kg'],
+        correctOption: 0,
+        explanation: 'Using m = F / a = 24 / 6 = 4.0 kg.',
+      },
+      {
+        type: 'descriptive',
+        marks: 10,
+        title: 'State Newton’s Three Laws of Motion and provide complete Free Body Diagrams (FBD) for an inclined plane problem with friction.',
+        rubric: 'Candidate must state all 3 laws accurately, draw block on incline with gravity, normal force, and friction resolved along parallel/perpendicular axes.',
+      },
+    ],
+    dsa: [
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'What is the worst-case time complexity of searching in an unbalanced Binary Search Tree with N nodes?',
+        options: ['O(N) - degenerate linear linked list structure', 'O(log N)', 'O(1)', 'O(N log N)'],
+        correctOption: 0,
+        explanation: 'When inserted in sorted order, an unbalanced BST degenerates into a linear linked list with height O(N).',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'Which tree traversal on a valid Binary Search Tree visits node keys in strictly ascending sorted order?',
+        options: ['Inorder traversal (Left, Root, Right)', 'Preorder traversal', 'Postorder traversal', 'Breadth-first level-order traversal'],
+        correctOption: 0,
+        explanation: 'Inorder traversal visits Left -> Root -> Right, preserving the BST ordering property.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'What is the maximum height difference allowed between left and right subtrees of any node in an AVL tree?',
+        options: ['At most 1', 'At most 2', 'At most 0 (strictly equal)', 'Arbitrary as long as keys are sorted'],
+        correctOption: 0,
+        explanation: 'AVL trees enforce the balance factor property: |height(left) - height(right)| ≤ 1.',
+      },
+      {
+        type: 'descriptive',
+        marks: 10,
+        title: 'Explain the four rotation cases (LL, RR, LR, RL) used in AVL Trees to restore self-balancing invariants after an insertion.',
+        rubric: 'Candidate must illustrate single rotations (LL, RR) and double rotations (LR, RL) with balance factors before and after rotation.',
+      },
+    ],
     aiml: [
       {
         type: 'mcq',
@@ -918,6 +1118,14 @@ export function generateAiQuestionsForTopic(topic, count = 3, difficulty = 'Medi
         explanation: 'EPnP / solvePnP algorithms solve the camera pose from 2D FaceMesh landmarks to 3D facial coordinates.',
       },
       {
+        type: 'mcq',
+        marks: 5,
+        title: 'Which regularization technique randomly drops hidden units during forward passes in training to prevent co-adaptation?',
+        options: ['Dropout', 'L1 Lasso Regularization', 'Batch Normalization', 'Early Stopping'],
+        correctOption: 0,
+        explanation: 'Dropout forces neurons to develop robust, non-co-dependent features.',
+      },
+      {
         type: 'descriptive',
         marks: 10,
         title: 'Compare Overfitting vs Underfitting in Machine Learning models. Detail 3 regularization techniques used in Deep Learning.',
@@ -937,7 +1145,7 @@ export function generateAiQuestionsForTopic(topic, count = 3, difficulty = 'Medi
         type: 'mcq',
         marks: 5,
         title: 'Which process occurs at strictly constant pressure in a thermodynamic cylinder system?',
-        options: ['Isobaric process', 'Isochoric process', 'Isothermal process', 'Isentropic process'],
+        options: ['Isobaric process (dP = 0)', 'Isochoric process', 'Isothermal process', 'Isentropic process'],
         correctOption: 0,
         explanation: 'Isobaric signifies constant pressure (dP = 0).',
       },
@@ -948,6 +1156,14 @@ export function generateAiQuestionsForTopic(topic, count = 3, difficulty = 'Medi
         options: ['Exactly zero (Third Law of Thermodynamics)', 'Infinite due to quantum fluctuation', 'Dependent on external atmospheric pressure', 'Negative value equivalent to lattice binding energy'],
         correctOption: 0,
         explanation: 'Third law states crystalline entropy converges to zero at absolute zero.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'What is the Carnot thermal efficiency of a reversible heat engine operating between 600 K source and 300 K sink?',
+        options: ['50% (1 - 300/600 = 0.50)', '100%', '33.3%', '75%'],
+        correctOption: 0,
+        explanation: 'η = 1 - (Tc / Th) = 1 - (300 / 600) = 50%.',
       },
       {
         type: 'descriptive',
@@ -962,7 +1178,7 @@ export function generateAiQuestionsForTopic(topic, count = 3, difficulty = 'Medi
         marks: 5,
         title: `Which fundamental principle is foundational to modern understanding of ${topic || 'the subject'}?`,
         options: [
-          `Core empirical conservation law in ${topic || 'theoretical computer science'}`,
+          `Conservation of state invariants and formal boundary conditions in ${topic || 'theoretical computer science'}`,
           'Arbitrary axiomatic convention without experimental backing',
           'Classical approximation without empirical verification',
           'Statistical outlier measurement model',
@@ -973,9 +1189,9 @@ export function generateAiQuestionsForTopic(topic, count = 3, difficulty = 'Medi
       {
         type: 'mcq',
         marks: 5,
-        title: `What is the primary constraint encountered when applying theoretical models of ${topic || 'this topic'} to real experimental conditions?`,
+        title: `What is the primary constraint encountered when applying theoretical models of ${topic || 'this topic'} to real operational conditions?`,
         options: [
-          'Non-ideal noise, latency constraints, and boundary conditions',
+          'Non-ideal noise, latency constraints, and boundary condition limits',
           'Complete absence of mathematical formulations',
           'Incompatibility with SI standard units',
           'Violation of speed of light in vacuum',
@@ -984,17 +1200,55 @@ export function generateAiQuestionsForTopic(topic, count = 3, difficulty = 'Medi
         explanation: 'Real-world operational systems always encounter latency, boundary noise, and empirical constraints.',
       },
       {
+        type: 'mcq',
+        marks: 5,
+        title: `When optimizing the efficiency of ${topic || 'this system'}, which performance trade-off is most commonly analyzed?`,
+        options: [
+          'Throughput vs latency and resource utilization under high load',
+          'Arbitrary instruction frequency without variance tracking',
+          'Constant zero-overhead assumption',
+          'Unconstrained memory expansion without bounds',
+        ],
+        correctOption: 0,
+        explanation: 'System optimization standardly evaluates trade-offs between throughput, latency, and memory footprint.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: `Which diagnostic technique or methodology is standardly employed to detect edge-case anomalies in ${topic || 'this domain'}?`,
+        options: [
+          'Comprehensive automated regression benchmarking and telemetry invariant checks',
+          'Skipping unit and boundary validation suites',
+          'Hardcoding static assumptions across dynamic inputs',
+          'Immediate unconditional system termination',
+        ],
+        correctOption: 0,
+        explanation: 'Automated telemetry and regression checks identify edge-case boundary departures.',
+      },
+      {
         type: 'descriptive',
         marks: 10,
         title: `Provide a structured analytical breakdown of key governing equations and real-world engineering applications of ${topic || 'this topic'}.`,
         rubric: 'Candidate should define key variables, formulate relevant equations, and discuss practical engineering implementations.',
       },
+      {
+        type: 'descriptive',
+        marks: 10,
+        title: `Discuss the primary failure modes and mitigation strategies encountered in real-world deployments of ${topic || 'this domain'}.`,
+        rubric: 'Candidate must identify resource bottlenecks, failure isolation protocols, and disaster recovery or fallback policies.',
+      },
     ],
   };
 
-  const pool = normalized.includes('ai') || normalized.includes('learn') || normalized.includes('neural') || normalized.includes('vision') || normalized.includes('deep') || normalized.includes('intel')
+  const pool = normalized.includes('quad') || normalized.includes('equation') || normalized.includes('math') || normalized.includes('algebra') || normalized.includes('calculus')
+    ? questionsDatabase.math
+    : normalized.includes('newton') || normalized.includes('motion') || normalized.includes('mechanic') || normalized.includes('kinematic') || normalized.includes('force')
+    ? questionsDatabase.mechanics
+    : normalized.includes('tree') || normalized.includes('bst') || normalized.includes('dsa') || normalized.includes('graph') || normalized.includes('algorithm')
+    ? questionsDatabase.dsa
+    : normalized.includes('ai') || normalized.includes('learn') || normalized.includes('neural') || normalized.includes('vision') || normalized.includes('deep') || normalized.includes('intel')
     ? questionsDatabase.aiml
-    : normalized.includes('thermo') || normalized.includes('physic')
+    : normalized.includes('thermo') || normalized.includes('heat') || normalized.includes('entropy') || normalized.includes('physic')
     ? questionsDatabase.thermo
     : questionsDatabase.default;
 

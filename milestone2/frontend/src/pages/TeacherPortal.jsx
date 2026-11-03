@@ -27,10 +27,22 @@ export default function TeacherPortal({ initialView = 'create-test' }) {
 
   // Active educator session
   const session = getActiveSession();
+  const teacherName = session?.fullName || session?.name || 'Course Faculty';
+  const teacherRole = session?.roleTitle || session?.subDetails || session?.department || 'Course Faculty';
+  const teacherInitials = (teacherName || 'CF')
+    .replace(/^(Dr\.|Prof\.|Mr\.|Ms\.)\s*/i, '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0])
+    .join('')
+    .toUpperCase() || 'CF';
+
   const activeUser = {
-    name: session?.name || session?.fullName || 'test teacher',
-    roleTitle: 'Teacher',
-    initials: 'TT',
+    name: teacherName,
+    roleTitle: teacherRole,
+    initials: teacherInitials,
   };
 
   // Clean blank test blueprint helper
@@ -41,6 +53,9 @@ export default function TeacherPortal({ initialView = 'create-test' }) {
     topic: '',
     description: '',
     instructions: '',
+    instructor: teacherName,
+    instructorRole: teacherRole,
+    instructorEmail: session?.email || '',
     difficulty: 'Medium',
     duration: 30,
     maxTabSwitches: 3,
@@ -69,12 +84,22 @@ export default function TeacherPortal({ initialView = 'create-test' }) {
   };
 
   const handleSaveDraft = (data) => {
-    saveOrUpdateTeacherTest({ ...data, status: 'draft' });
+    saveOrUpdateTeacherTest({
+      ...data,
+      instructor: data.instructor || teacherName,
+      instructorRole: data.instructorRole || teacherRole,
+      status: 'draft',
+    });
     showToast('Assessment blueprint saved as Draft.');
   };
 
   const handlePublish = (data) => {
-    saveOrUpdateTeacherTest({ ...data, status: 'published' });
+    saveOrUpdateTeacherTest({
+      ...data,
+      instructor: data.instructor || teacherName,
+      instructorRole: data.instructorRole || teacherRole,
+      status: 'published',
+    });
     showToast('Assessment published successfully!');
   };
 
@@ -91,7 +116,12 @@ export default function TeacherPortal({ initialView = 'create-test' }) {
   };
 
   const handleDirectPublish = (test) => {
-    const updatedTest = { ...test, status: 'published' };
+    const updatedTest = {
+      ...test,
+      instructor: test.instructor || teacherName,
+      instructorRole: test.instructorRole || teacherRole,
+      status: 'published',
+    };
     saveOrUpdateTeacherTest(updatedTest);
     setFormData(updatedTest);
     showToast(`✓ Test "${test.title || 'Assessment'}" is now PUBLISHED and live for students! (Code: ${test.code})`);

@@ -171,7 +171,8 @@ export default function Login({ roleOverride }) {
             authenticatedAt: new Date().toISOString(),
           };
           sessionStorage.setItem('examai_auth_user', JSON.stringify(sessionUser));
-          setTimeout(() => navigate('/dashboard/student'), 1200);
+          localStorage.setItem('examai_auth_user', JSON.stringify(sessionUser));
+          setTimeout(() => navigate('/dashboard/student'), 600);
         } else if (latestUser?.status === 'rejected') {
           setAdmissionState({
             status: 'rejected',
@@ -223,7 +224,7 @@ export default function Login({ roleOverride }) {
       setSuccessMessage(response.message);
       setTimeout(() => {
         navigate(`/dashboard/${role}`);
-      }, 700);
+      }, 500);
     } catch (err) {
       setApiError(err.message || 'Authentication failed. Please verify your credentials.');
       setIsShaking(true);
@@ -641,7 +642,7 @@ export default function Login({ roleOverride }) {
               clipRule="evenodd"
             />
           </svg>
-          <span>{successMessage} Redirecting to your dashboard...</span>
+          <span>{successMessage} Redirecting...</span>
         </div>
       )}
 

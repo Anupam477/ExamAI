@@ -33,6 +33,8 @@
   --sp-amber-text: #D97706;
   --sp-emerald-bg: #D1FAE5;
   --sp-emerald-text: #059669;
+  --sp-accent-emerald: #10B981;
+  --sp-accent-emerald-light: #D1FAE5;
 
   --sp-sidebar-width: 240px;
   --sp-header-height: 64px;
@@ -74,6 +76,8 @@
   --sp-amber-text: #FBBF24;
   --sp-emerald-bg: #093322;
   --sp-emerald-text: #34D399;
+  --sp-accent-emerald: #34D399;
+  --sp-accent-emerald-light: #093322;
 
   --sp-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
   --sp-shadow-card-hover: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
@@ -2261,6 +2265,33 @@ input:checked + .sp-toggle-slider:before {
 .er-next-btn:hover {
   background-color: #4338CA;
   transform: translateY(-1px);
+}
+
+.er-finalize-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.55rem 1.45rem;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #059669 0%, #10B981 100%) !important;
+  border: 1px solid #047857 !important;
+  color: #FFFFFF !important;
+  font-size: 0.84375rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4) !important;
+  transition: all 160ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.er-finalize-btn:hover {
+  background: linear-gradient(135deg, #047857 0%, #059669 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5) !important;
+}
+
+.er-finalize-btn:active {
+  transform: translateY(0);
 }
 
 

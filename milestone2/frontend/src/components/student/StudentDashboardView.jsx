@@ -9,7 +9,7 @@ import { getStoredTeacherTests, isStudentAssignedToTest, getStudentSubmissions }
 export default function StudentDashboardView({ candidateUser, onNavigateTab }) {
   const allTests = getStoredTeacherTests();
   const assignedTests = useMemo(() => {
-    return allTests.filter((t) => t.status !== 'archived' && isStudentAssignedToTest(t, candidateUser));
+    return allTests.filter((t) => t.status === 'published' && isStudentAssignedToTest(t, candidateUser));
   }, [allTests, candidateUser]);
 
   const submissions = getStudentSubmissions(candidateUser?.id || candidateUser?.email);
