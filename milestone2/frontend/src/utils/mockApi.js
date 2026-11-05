@@ -179,7 +179,15 @@ export function getStoredUsers() {
     const raw = localStorage.getItem('examai_admin_users');
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Ensure any newly registered faculty who hasn't been explicitly approved by admin remains pending
+        return parsed.map((u) => {
+          if (u.role === 'teacher' && u.id !== 'usr_003' && !u.approvedByAdmin && u.status !== 'rejected') {
+            return { ...u, status: 'pending' };
+          }
+          return u;
+        });
+      }
     }
   } catch (e) {
     console.warn('Error reading stored users:', e);
@@ -263,6 +271,7 @@ export function resolveAdmissionRequest(userId, decision, reason = null) {
         targetUser = {
           ...u,
           status: decision,
+          approvedByAdmin: decision === 'approved',
           rejectionReason: decision === 'rejected' ? (reason || 'Administrative review denial') : null,
         };
         return targetUser;
@@ -386,37 +395,109 @@ export async function mockLoginApi(role, credentials) {
     };
   }
 
-  // Teacher or Admin role login
-  const users = getStoredUsers();
-  const cleanEmail = credentials.email.trim().toLowerCase();
-  const existingTeacher = users.find(
-    (u) => u.email?.trim().toLowerCase() === cleanEmail && u.role === role
-  ) || users.find(
-    (u) => u.email?.trim().toLowerCase() === cleanEmail
-  );
+  // Teacher role login
+  if (role === 'teacher') {
+    const users = getStoredUsers();
+    const cleanEmail = credentials.email.trim().toLowerCase();
+    let existingTeacher = users.find(
+      (u) => u.email?.trim().toLowerCase() === cleanEmail && u.role === 'teacher'
+    ) || users.find(
+      (u) => u.email?.trim().toLowerCase() === cleanEmail
+    );
 
-  let teacherDisplayName = existingTeacher ? (existingTeacher.name || existingTeacher.fullName) : '';
-  let teacherRoleTitle = existingTeacher ? (existingTeacher.subDetails || existingTeacher.department || 'Course Faculty') : 'Course Faculty';
+    // If teacher does not exist, auto-register them as pending so admin must approve
+    if (!existingTeacher) {
+      const emailPrefix = cleanEmail.split('@')[0];
+      const parts = emailPrefix.split(/[._-]/).filter(Boolean);
+      const generatedName = parts.length > 0
+        ? parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
+        : 'Course Faculty';
 
-  if (!teacherDisplayName) {
-    // Derive clean human name from email (e.g. "priya.sharma@domain.com" -> "Priya Sharma")
-    const emailPrefix = (credentials.email || '').split('@')[0];
-    const parts = emailPrefix.split(/[._-]/).filter(Boolean);
-    teacherDisplayName = parts.length > 0
-      ? parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
-      : 'Course Faculty';
+      existingTeacher = {
+        id: `usr_${Date.now()}`,
+        name: generatedName,
+        fullName: generatedName,
+        email: cleanEmail,
+        role: 'teacher',
+        college: 'Apex Institute of Technology',
+        identifier: `FAC-${Math.floor(1000 + Math.random() * 9000)}`,
+        subDetails: 'Department of Computer Science',
+        roleTitle: 'Department of Computer Science',
+        department: 'Computer Science',
+        joined: new Date().toISOString().split('T')[0],
+        joinedDisplay: 'Just now',
+        status: cleanEmail === 'teacher@gmail.com' ? 'approved' : 'pending',
+        active: true,
+        rejectionReason: null,
+        adminNotes: 'Educator registered. Awaiting administrator approval.',
+        avatarColor: '#0E6B58',
+        idProofUrl: 'DOC-FACULTY-UPLOAD',
+      };
+      saveStoredUsers([existingTeacher, ...users]);
+    }
+
+    // Case 1: Pending Approval
+    if (existingTeacher.status === 'pending') {
+      recordAdmissionRequest(existingTeacher);
+      return {
+        success: false,
+        status: 'pending',
+        user: existingTeacher,
+        message: 'Your educator account is pending administrator approval before you can access the educator portal.',
+      };
+    }
+
+    // Case 2: Rejected by Admin
+    if (existingTeacher.status === 'rejected') {
+      return {
+        success: false,
+        status: 'rejected',
+        user: existingTeacher,
+        reason: existingTeacher.rejectionReason || 'Institutional educator credential verification was declined by administrator.',
+        message: 'Your educator registration was rejected by the administrator.',
+      };
+    }
+
+    // Case 3: Approved
+    const teacherDisplayName = existingTeacher.fullName || existingTeacher.name;
+    const teacherRoleTitle = existingTeacher.roleTitle || existingTeacher.subDetails || existingTeacher.department || 'Course Faculty';
+
+    const sessionUser = {
+      id: existingTeacher.id,
+      email: existingTeacher.email,
+      role: 'teacher',
+      name: teacherDisplayName,
+      fullName: teacherDisplayName,
+      roleTitle: teacherRoleTitle,
+      department: existingTeacher.department || 'Academic Department',
+      college: existingTeacher.college || 'Institutional Faculty',
+      token: `fake-jwt-token-examai-teacher-${existingTeacher.id}-${Date.now()}`,
+      authenticatedAt: new Date().toISOString(),
+      status: 'approved',
+    };
+
+    sessionStorage.setItem('examai_auth_user', JSON.stringify(sessionUser));
+    localStorage.setItem('examai_auth_user', JSON.stringify(sessionUser));
+
+    return {
+      success: true,
+      status: 'approved',
+      message: `Welcome back, ${teacherDisplayName}! Signed in successfully as teacher.`,
+      user: sessionUser,
+    };
   }
 
+  // Admin role login
   const mockUser = {
-    id: existingTeacher ? existingTeacher.id : `usr_${Date.now()}`,
+    id: `usr_admin_${Date.now()}`,
     email: credentials.email,
-    role: role,
-    name: role === 'admin' ? 'Institutional Administrator' : teacherDisplayName,
-    fullName: role === 'admin' ? 'Institutional Administrator' : teacherDisplayName,
-    roleTitle: role === 'admin' ? 'System Administrator' : teacherRoleTitle,
-    department: existingTeacher?.department || 'Academic Department',
-    college: existingTeacher?.college || 'Institutional Faculty',
-    token: `fake-jwt-token-examai-${role}-${Date.now()}`,
+    role: 'admin',
+    name: 'Institutional Administrator',
+    fullName: 'Institutional Administrator',
+    roleTitle: 'System Administrator',
+    department: 'Administration',
+    college: 'ExamAI Central Administration',
+    token: `fake-jwt-token-examai-admin-${Date.now()}`,
     authenticatedAt: new Date().toISOString(),
     status: 'approved',
   };
@@ -427,7 +508,7 @@ export async function mockLoginApi(role, credentials) {
   return {
     success: true,
     status: 'approved',
-    message: `Welcome back! Signed in successfully as ${role}.`,
+    message: 'Welcome back! Signed in successfully as administrator.',
     user: mockUser,
   };
 }
@@ -438,7 +519,7 @@ export async function mockLoginApi(role, credentials) {
 export async function mockSignupApi(role, formData) {
   await new Promise((resolve) => setTimeout(resolve, ARTIFICIAL_DELAY_MS));
 
-  const newUserName = `${formData.firstName} ${formData.lastName}`.trim() || 'Course Faculty';
+  const newUserName = `${formData.firstName} ${formData.lastName}`.trim() || (role === 'teacher' ? 'Course Faculty' : 'Candidate');
   const newUser = {
     id: `usr_${Date.now()}`,
     name: newUserName,
@@ -457,22 +538,23 @@ export async function mockSignupApi(role, formData) {
     department: formData.department || (role === 'teacher' ? 'Academic Department' : 'Computer Science'),
     joined: new Date().toISOString().split('T')[0],
     joinedDisplay: 'Just now',
-    status: role === 'teacher' ? 'approved' : 'pending',
+    status: 'pending',
     active: true,
     rejectionReason: null,
-    adminNotes: role === 'teacher' ? 'Faculty registered via teacher portal.' : 'Candidate registered through student portal.',
+    adminNotes: role === 'teacher'
+      ? 'Faculty registration submitted via teacher portal. Awaiting administrator verification.'
+      : 'Candidate registration submitted through student portal. Awaiting administrator verification.',
     avatarColor: role === 'teacher' ? '#0E6B58' : '#2D5BD0',
     idProofUrl: role === 'teacher' ? 'DOC-FACULTY-UPLOAD' : 'DOC-STUDENT-UPLOAD',
   };
 
   const users = getStoredUsers();
   saveStoredUsers([newUser, ...users]);
+  recordAdmissionRequest(newUser);
 
   return {
     success: true,
-    message: role === 'teacher'
-      ? `Faculty account created for ${newUser.name}! You can now sign in.`
-      : `Account created successfully for ${newUser.name}. Pending administrator approval.`,
+    message: `Account created successfully for ${newUser.name}. Pending administrator approval before access is granted.`,
     user: newUser,
   };
 }

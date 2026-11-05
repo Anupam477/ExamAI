@@ -73,24 +73,28 @@ export default function Login({ roleOverride }) {
           });
 
           // Create active session
+          const userRole = latestUser.role || role || 'student';
           const sessionUser = {
             id: latestUser.id,
             email: latestUser.email,
+            name: latestUser.name,
             fullName: latestUser.name,
-            role: 'student',
-            college: latestUser.college,
+            role: userRole,
+            college: latestUser.college || 'Apex Institute of Technology',
             identifier: latestUser.identifier,
             department: latestUser.department,
             subDetails: latestUser.subDetails,
+            roleTitle: latestUser.roleTitle || latestUser.subDetails || (userRole === 'teacher' ? 'Course Faculty' : 'Student Candidate'),
             status: 'approved',
-            token: `jwt-examai-student-${latestUser.id}-${Date.now()}`,
+            token: `jwt-examai-${userRole}-${latestUser.id}-${Date.now()}`,
             authenticatedAt: new Date().toISOString(),
           };
           sessionStorage.setItem('examai_auth_user', JSON.stringify(sessionUser));
+          localStorage.setItem('examai_auth_user', JSON.stringify(sessionUser));
 
-          // Auto-redirect to examination workspace
+          // Auto-redirect to designated workspace
           setTimeout(() => {
-            navigate('/dashboard/student');
+            navigate(`/dashboard/${userRole}`);
           }, 1500);
         } else if (latestUser.status === 'rejected') {
           setAdmissionState({
@@ -157,22 +161,25 @@ export default function Login({ roleOverride }) {
             user: latestUser,
             reason: null,
           });
+          const userRole = latestUser.role || role || 'student';
           const sessionUser = {
             id: latestUser.id,
             email: latestUser.email,
+            name: latestUser.name,
             fullName: latestUser.name,
-            role: 'student',
-            college: latestUser.college,
+            role: userRole,
+            college: latestUser.college || 'Apex Institute of Technology',
             identifier: latestUser.identifier,
             department: latestUser.department,
             subDetails: latestUser.subDetails,
+            roleTitle: latestUser.roleTitle || latestUser.subDetails || (userRole === 'teacher' ? 'Course Faculty' : 'Student Candidate'),
             status: 'approved',
-            token: `jwt-examai-student-${latestUser.id}-${Date.now()}`,
+            token: `jwt-examai-${userRole}-${latestUser.id}-${Date.now()}`,
             authenticatedAt: new Date().toISOString(),
           };
           sessionStorage.setItem('examai_auth_user', JSON.stringify(sessionUser));
           localStorage.setItem('examai_auth_user', JSON.stringify(sessionUser));
-          setTimeout(() => navigate('/dashboard/student'), 600);
+          setTimeout(() => navigate(`/dashboard/${userRole}`), 600);
         } else if (latestUser?.status === 'rejected') {
           setAdmissionState({
             status: 'rejected',
@@ -323,8 +330,8 @@ export default function Login({ roleOverride }) {
                 ExamAI
               </span>
             </div>
-            <Badge variant={isApproved ? 'success' : isRejected ? 'danger' : 'student'}>
-              {isApproved ? 'Admission Authorized' : isRejected ? 'Entry Denied' : 'Proctor Review Queue'}
+            <Badge variant={isApproved ? 'success' : isRejected ? 'danger' : (role === 'teacher' ? 'teacher' : 'student')}>
+              {isApproved ? 'Access Authorized' : isRejected ? 'Entry Denied' : (role === 'teacher' ? 'Faculty Verification Queue' : 'Proctor Review Queue')}
             </Badge>
           </div>
 
@@ -424,17 +431,17 @@ export default function Login({ roleOverride }) {
                 }}
               >
                 {isApproved
-                  ? 'Admission Approved by Admin!'
+                  ? (role === 'teacher' ? 'Faculty Account Approved by Admin!' : 'Admission Approved by Admin!')
                   : isRejected
-                  ? 'Examination Access Denied'
-                  : 'Test Admission Review in Progress'}
+                  ? (role === 'teacher' ? 'Faculty Access Denied' : 'Examination Access Denied')
+                  : (role === 'teacher' ? 'Faculty Account Review in Progress' : 'Test Admission Review in Progress')}
               </h2>
               <p style={{ fontSize: '0.925rem', color: '#5F6B7D', lineHeight: 1.55, margin: 0 }}>
                 {isApproved
-                  ? 'Your identity has been verified by the administrator. Entering examination room...'
+                  ? (role === 'teacher' ? 'Your faculty credentials have been verified by the administrator. Entering educator portal...' : 'Your identity has been verified by the administrator. Entering examination room...')
                   : isRejected
-                  ? 'The institutional administrator has declined entry for this session.'
-                  : 'Your login has been recorded. An admission request was dispatched to the administrator console for approval.'}
+                  ? (role === 'teacher' ? 'The institutional administrator has declined educator registration.' : 'The institutional administrator has declined entry for this session.')
+                  : (role === 'teacher' ? 'Your faculty registration has been recorded. An approval request was dispatched to the administrator console.' : 'Your login has been recorded. An admission request was dispatched to the administrator console for approval.')}
               </p>
             </div>
 
@@ -453,25 +460,25 @@ export default function Login({ roleOverride }) {
             >
               <div>
                 <span style={{ fontSize: '0.75rem', color: '#5F6B7D', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Candidate Name
+                  {role === 'teacher' ? 'Faculty Name' : 'Candidate Name'}
                 </span>
                 <strong style={{ fontSize: '0.9375rem', color: '#0B1B33' }}>
-                  {admissionState.user?.name || 'Enrolled Student'}
+                  {admissionState.user?.name || (role === 'teacher' ? 'Educator' : 'Enrolled Student')}
                 </strong>
               </div>
 
               <div>
                 <span style={{ fontSize: '0.75rem', color: '#5F6B7D', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Roll / Identifier
+                  {role === 'teacher' ? 'Faculty ID' : 'Roll / Identifier'}
                 </span>
-                <span style={{ fontSize: '0.9375rem', color: '#2D5BD0', fontWeight: 600 }}>
-                  {admissionState.user?.identifier || '36FFHFHGF'}
+                <span style={{ fontSize: '0.9375rem', color: role === 'teacher' ? '#0E6B58' : '#2D5BD0', fontWeight: 600 }}>
+                  {admissionState.user?.identifier || (role === 'teacher' ? 'FAC-2026' : '36FFHFHGF')}
                 </span>
               </div>
 
               <div>
                 <span style={{ fontSize: '0.75rem', color: '#5F6B7D', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Registered Email
+                  {role === 'teacher' ? 'Faculty Email' : 'Registered Email'}
                 </span>
                 <span style={{ fontSize: '0.875rem', color: '#14233C' }}>
                   {admissionState.user?.email}
@@ -480,10 +487,10 @@ export default function Login({ roleOverride }) {
 
               <div>
                 <span style={{ fontSize: '0.75rem', color: '#5F6B7D', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Exam Room
+                  {role === 'teacher' ? 'Assigned Department' : 'Exam Room'}
                 </span>
                 <span style={{ fontSize: '0.875rem', color: '#14233C', fontWeight: 600 }}>
-                  AI-Milestone Exam 2026
+                  {role === 'teacher' ? (admissionState.user?.department || 'Academic Department') : 'AI-Milestone Exam 2026'}
                 </span>
               </div>
             </div>
@@ -556,11 +563,11 @@ export default function Login({ roleOverride }) {
 
               {isApproved && (
                 <Button
-                  variant="success"
+                  variant={role === 'teacher' ? 'teacher' : 'success'}
                   fullWidth
-                  onClick={() => navigate('/dashboard/student')}
+                  onClick={() => navigate(`/dashboard/${admissionState.user?.role || role || 'student'}`)}
                 >
-                  Join Exam Now →
+                  {role === 'teacher' ? 'Open Educator Studio →' : 'Join Exam Now →'}
                 </Button>
               )}
 

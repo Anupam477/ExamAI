@@ -681,7 +681,8 @@ export default function AdminUsers() {
                   </div>
 
                   <p style={{ fontSize: '0.84375rem', color: '#C9D1DC', margin: 0, lineHeight: 1.4 }}>
-                    Candidate <strong style={{ color: '#FFFFFF' }}>{activeAdmissionRequest.name}</strong> ({activeAdmissionRequest.email}) logged in and is waiting for test entry approval.
+                    {activeAdmissionRequest.role === 'teacher' ? 'Faculty / Educator' : 'Candidate'}{' '}
+                    <strong style={{ color: '#FFFFFF' }}>{activeAdmissionRequest.name}</strong> ({activeAdmissionRequest.email}) is waiting for administrator approval.
                   </p>
                 </div>
               </div>
@@ -711,7 +712,7 @@ export default function AdminUsers() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  <span>Accept & Admit</span>
+                  <span>{activeAdmissionRequest.role === 'teacher' ? 'Approve Faculty' : 'Accept & Admit'}</span>
                 </button>
 
                 <button

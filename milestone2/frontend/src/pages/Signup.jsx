@@ -239,7 +239,7 @@ export default function Signup({ roleOverride }) {
               marginBottom: '0.6rem',
             }}
           >
-            Registration complete
+            Registration submitted for review
           </h3>
 
           <p
@@ -247,15 +247,31 @@ export default function Signup({ roleOverride }) {
               fontSize: '0.9375rem',
               color: '#5F6B7D',
               lineHeight: 1.5,
+              marginBottom: '1.25rem',
+            }}
+          >
+            {successMessage || 'Account created successfully. Pending administrator approval.'}
+          </p>
+
+          <div
+            style={{
+              backgroundColor: '#EFF6FF',
+              border: '1px solid #BFDBFE',
+              borderRadius: '8px',
+              padding: '0.85rem 1rem',
+              color: '#1E40AF',
+              fontSize: '0.8125rem',
+              textAlign: 'left',
+              lineHeight: 1.45,
               marginBottom: '1.75rem',
             }}
           >
-            {successMessage}
-          </p>
+            <strong>Institutional Verification Queue:</strong> Your credentials have been submitted to the administrator console. Proceed to log in to monitor your live admission status.
+          </div>
 
           <Link to={`/login/${role}`} style={{ textDecoration: 'none' }}>
             <Button variant={role} fullWidth>
-              Continue to log in
+              Continue to log in &rarr;
             </Button>
           </Link>
         </div>
