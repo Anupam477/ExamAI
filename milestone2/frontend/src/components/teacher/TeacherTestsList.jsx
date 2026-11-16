@@ -4,6 +4,7 @@ import {
   deleteTeacherTest,
   rescheduleTeacherTest,
   saveOrUpdateTeacherTest,
+  reassignTeacherTest,
 } from '../../utils/mockApi';
 
 /**
@@ -28,6 +29,18 @@ export default function TeacherTestsList({ onCreateNew, onEditTest, onDirectPubl
   const [qOptions, setQOptions] = useState(['', '', '', '']);
   const [qCorrect, setQCorrect] = useState(0);
   const [qExplanation, setQExplanation] = useState('');
+
+  // Re-assign test to students (even if no questions were modified)
+  const handleReassignClick = (test) => {
+    const studentCount = test.assignedStudents?.length || 0;
+    const confirmMsg = `Re-assign "${test.title}" to ${studentCount > 0 ? `${studentCount} enrolled candidates` : 'all eligible students'}?\n\nCandidates who already completed this exam will immediately be granted a fresh attempt to take it again (even without modifying questions).`;
+    if (window.confirm(confirmMsg)) {
+      const updated = reassignTeacherTest(test.id);
+      setTests(updated);
+      setSaveSuccessMsg(`✓ Test "${test.title}" RE-ASSIGNED successfully! Candidates can now take this examination again.`);
+      setTimeout(() => setSaveSuccessMsg(null), 4000);
+    }
+  };
 
   // Sync tests on changes
   useEffect(() => {
@@ -286,12 +299,20 @@ export default function TeacherTestsList({ onCreateNew, onEditTest, onDirectPubl
               </div>
 
               {/* Specs */}
-              <div style={{ display: 'flex', gap: '12px', fontSize: '0.78rem', color: 'var(--tp-text-secondary)', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', fontSize: '0.78rem', color: 'var(--tp-text-secondary)', marginBottom: '1.25rem' }}>
                 <span>⏱ {test.duration}m</span>
                 <span>&bull;</span>
                 <span>{test.questions?.length || 0} Questions</span>
                 <span>&bull;</span>
                 <span>{test.assignedStudents?.length || 0} Students</span>
+                {test.assignmentVersion > 1 && (
+                  <>
+                    <span>&bull;</span>
+                    <span style={{ fontSize: '0.7rem', padding: '1px 6px', borderRadius: '4px', backgroundColor: '#FEF3C7', color: '#92400E', fontWeight: 700 }}>
+                      🔄 Re-assigned (v{test.assignmentVersion})
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -342,6 +363,49 @@ export default function TeacherTestsList({ onCreateNew, onEditTest, onDirectPubl
                     <span>✓ Live</span>
                   </button>
                 )}
+
+                {/* Direct Re-assign / Allow Retake Button */}
+                <button
+                  type="button"
+                  className="teacher-btn-secondary"
+                  style={{
+                    padding: '0.35rem 0.65rem',
+                    fontSize: '0.75rem',
+                    color: '#D97706',
+                    borderColor: '#FDE68A',
+                    backgroundColor: '#FFFBEB',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => handleReassignClick(test)}
+                  title="Re-assign this test to candidates: allows students who already completed the test to take it again (even without changing questions)"
+                >
+                  <span>🔄 Re-assign</span>
+                </button>
+
+                {/* Direct Shortcut to Step 3: Assign Candidates */}
+                <button
+                  type="button"
+                  className="teacher-btn-secondary"
+                  style={{
+                    padding: '0.35rem 0.65rem',
+                    fontSize: '0.75rem',
+                    color: '#0D9488',
+                    borderColor: '#99F6E4',
+                    backgroundColor: '#F0FDFA',
+                    fontWeight: 600,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                  onClick={() => onEditTest(test, 3)}
+                  title="Open candidate roster to assign/re-assign students"
+                >
+                  <span>👥 Assign ({test.assignedStudents?.length || 0})</span>
+                </button>
 
                 {/* Edit Basic Details */}
                 <button
@@ -426,6 +490,34 @@ export default function TeacherTestsList({ onCreateNew, onEditTest, onDirectPubl
             </div>
           </div>
         ))}
+
+        {filteredTests.length === 0 && (
+          <div
+            className="teacher-card"
+            style={{
+              gridColumn: '1 / -1',
+              textAlign: 'center',
+              padding: '3.5rem 2rem',
+              backgroundColor: 'var(--tp-surface)',
+            }}
+          >
+            <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>📝</div>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: '0 0 6px', color: 'var(--tp-text-primary)' }}>
+              No Assessments Found
+            </h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--tp-text-muted)', margin: '0 0 1.5rem', maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>
+              No tests have been created yet. Automatic test generation is turned off. Click below to create and publish your first assessment.
+            </p>
+            <button
+              type="button"
+              className="teacher-btn-primary"
+              onClick={onCreateNew}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              <span>+</span> Create New Test
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Reschedule Interactive Modal */}

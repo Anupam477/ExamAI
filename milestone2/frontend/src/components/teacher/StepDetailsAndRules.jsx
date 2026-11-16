@@ -340,7 +340,7 @@ export default function StepDetailsAndRules({ formData, onChange, onNext }) {
                       color: 'var(--tp-green-text)',
                     }}
                   >
-                    🔒 Instructor Controlled
+
                   </span>
                 </div>
                 <div style={{ fontSize: '0.71875rem', color: 'var(--tp-text-muted)' }}>

@@ -102,6 +102,26 @@ export default function StepAssignStudents({ formData, onChange, onNext, onBack,
         </div>
       </div>
 
+      {/* Re-assignment Retake Banner */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '0.65rem 1rem',
+          borderRadius: '8px',
+          backgroundColor: '#EFF6FF',
+          border: '1px solid #BFDBFE',
+          color: '#1E40AF',
+          fontSize: '0.8125rem',
+        }}
+      >
+        <span style={{ fontSize: '1.1rem' }}>🔄</span>
+        <div>
+          <strong>Re-assignment Active:</strong> Even if you make zero changes to test questions or rules, assigning or publishing this test will immediately permit previously completed candidates to take this examination again.
+        </div>
+      </div>
+
       {/* Candidate Roster List */}
       <div className="teacher-card" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
@@ -239,7 +259,16 @@ export default function StepAssignStudents({ formData, onChange, onNext, onBack,
                 fontWeight: 700,
                 boxShadow: '0 2px 8px rgba(22, 163, 74, 0.3)',
               }}
-              onClick={() => onDirectPublish({ ...formData, status: 'published' })}
+              onClick={() => {
+                const now = new Date().toISOString();
+                onDirectPublish({
+                  ...formData,
+                  status: 'published',
+                  reassignedAt: now,
+                  assignedAt: now,
+                  allowRetake: true,
+                });
+              }}
               title="Publish and assign immediately to all students"
             >
               <span>Assign &amp; Publish Test Now</span>
@@ -251,7 +280,16 @@ export default function StepAssignStudents({ formData, onChange, onNext, onBack,
             type="button"
             className="teacher-btn-primary"
             style={{ width: 'auto' }}
-            onClick={onNext}
+            onClick={() => {
+              const now = new Date().toISOString();
+              onChange({
+                ...formData,
+                reassignedAt: now,
+                assignedAt: now,
+                allowRetake: true,
+              });
+              onNext();
+            }}
           >
             Review &amp; Publish Exam ({assigned.length} Enrolled) &rarr;
           </button>

@@ -583,202 +583,11 @@ export function clearActiveSession() {
    Teacher Assessments & Question Generation Data Layer
    ========================================================================== */
 
-export const INITIAL_TEACHER_TESTS = [
-  {
-    id: 'test_001',
-    title: 'Artificial Intelligence & Machine Learning',
-    subject: 'Computer Science',
-    topic: 'Deep Learning & Neural Networks',
-    instructor: 'Prof. Rajesh Sharma',
-    instructorRole: 'Senior Lecturer · Mathematics & AI',
-    description: 'Comprehensive midterm evaluation on deep neural network architectures, backpropagation gradients, and real-time computer vision proctoring.',
-    instructions: 'Webcam proctoring is active throughout the session. Closed-book examination. Max 3 tab switches permitted.',
-    difficulty: 'Medium',
-    duration: 45,
-    maxTabSwitches: 3,
-    scheduledStart: '2026-10-26T09:00',
-    scheduledEnd: '2026-10-30T21:00',
-    proctoring: {
-      webcam: true,
-      negativeMarking: false,
-      shuffleQuestions: true,
-      shuffleOptions: true,
-    },
-    status: 'published',
-    code: 'AIML-DEEP-2026',
-    createdAt: '2026-10-25',
-    assignedStudents: ['usr_001', 'usr_002', 'usr_004', 'usr_008'],
-    questions: [
-      {
-        id: 'q_001',
-        type: 'mcq',
-        marks: 5,
-        title: 'In deep convolutional neural networks (CNNs), what is the primary role of a pooling layer (such as Max-Pooling)?',
-        options: [
-          'Reduces spatial dimensions (width x height) to limit computational load and prevent overfitting',
-          'Flattens all weight matrices into one-dimensional scalar probability tensors',
-          'Computes the backward chain-rule gradient vector for the output layer',
-          'Normalizes pixel luminance uniformly across all incoming RGB color channels',
-        ],
-        correctOption: 0,
-        explanation: 'Pooling downsamples spatial dimensions while preserving translational invariant dominant feature maps.',
-      },
-      {
-        id: 'q_002',
-        type: 'mcq',
-        marks: 5,
-        title: 'Which loss function is mathematically standard when optimizing a multi-class neural network with a Softmax output layer?',
-        options: [
-          'Categorical Cross-Entropy Loss',
-          'Mean Squared Error (MSE) Euclidean distance',
-          'Huber Smooth L1 Loss',
-          'Hinge Loss for binary linear margins',
-        ],
-        correctOption: 0,
-        explanation: 'Categorical cross-entropy directly measures the divergence between target one-hot distributions and Softmax probabilities.',
-      },
-      {
-        id: 'q_003',
-        type: 'mcq',
-        marks: 5,
-        title: 'What core architectural mechanism enables Transformer models (e.g., Gemini, GPT) to capture global context without recurrent loops?',
-        options: [
-          'Scaled Dot-Product Multi-Head Self-Attention',
-          'K-Nearest Neighbors feature aggregation',
-          'Depthwise Dilated 1D Convolutions',
-          'Fixed-stride temporal Average-Pooling',
-        ],
-        correctOption: 0,
-        explanation: 'Self-attention calculates pairwise query-key alignment matrices across all tokens in parallel.',
-      },
-      {
-        id: 'q_004',
-        type: 'mcq',
-        marks: 5,
-        title: 'In real-time edge proctoring models (e.g. MediaPipe BlazeFace), why is Depthwise Separable Convolution favored?',
-        options: [
-          'It drastically reduces FLOPs and inference latency on web browsers and edge devices',
-          'It completely eliminates the requirement for training data labels',
-          'It guarantees zero gradient loss during backpropagation',
-          'It converts floating-point weights into non-negative integers',
-        ],
-        correctOption: 0,
-        explanation: 'Depthwise separable convolution splits spatial filtering from pointwise 1x1 combination, yielding ~8-9x FLOP savings.',
-      },
-      {
-        id: 'q_005',
-        type: 'descriptive',
-        marks: 10,
-        title: 'Explain the Vanishing Gradient problem during backpropagation in deep neural networks. Discuss how Residual Skip Connections (ResNet) mitigate this issue.',
-        rubric: 'Candidate must mention chain-rule derivative multiplication decay (< 1), saturation of sigmoid/tanh activations, and identity shortcut formulation F(x) + x allowing gradient flow.',
-        sampleAnswer: 'When backpropagating through many layers, gradients diminish exponentially due to repeated multiplication of small derivatives. ResNet skip connections introduce identity mappings H(x) = F(x) + x, allowing gradients to flow unimpeded directly back to earlier layers via dH/dx = dF/dx + 1.',
-      },
-    ],
-  },
-  {
-    id: 'test_002',
-    title: 'Advanced Computer Networks & Cryptography',
-    subject: 'Computer Science',
-    topic: 'TLS Handshake & RSA Public Key Crypto',
-    instructor: 'Prof. Kiran Rao',
-    instructorRole: 'Associate Professor · Computer Science & Physics',
-    description: 'Comprehensive evaluation of secure transport protocols and asymmetric encryption algorithms.',
-    instructions: 'Closed book exam. Proctoring webcam and gaze deviation tracking will run continuously.',
-    difficulty: 'Hard',
-    duration: 60,
-    maxTabSwitches: 2,
-    scheduledStart: '2026-10-27T10:00',
-    scheduledEnd: '2026-10-31T20:00',
-    proctoring: {
-      webcam: true,
-      negativeMarking: true,
-      shuffleQuestions: true,
-      shuffleOptions: true,
-    },
-    status: 'published',
-    code: 'CS-NET-CRYPTO-26',
-    createdAt: '2026-10-23',
-    assignedStudents: ['usr_001', 'usr_002', 'usr_004', 'usr_007', 'usr_008'],
-    questions: [
-      {
-        id: 'q_201',
-        type: 'mcq',
-        marks: 10,
-        title: 'During TLS 1.3 handshake, which key exchange mechanism eliminates the requirement for static RSA key sharing?',
-        options: [
-          'Diffie-Hellman Ephemeral (ECDHE)',
-          'DES symmetric stream cipher',
-          'MD5 digest checksum hashing',
-          'RC4 pseudo-random permutation',
-        ],
-        correctOption: 0,
-        explanation: 'TLS 1.3 mandates ephemeral Diffie-Hellman to guarantee Forward Secrecy.',
-      },
-      {
-        id: 'q_202',
-        type: 'descriptive',
-        marks: 15,
-        title: 'Explain how RSA encryption relies on the computational hardness of large integer factorization. Discuss chosen-ciphertext attacks.',
-        rubric: 'Expects discussion of Euler totient function phi(n) = (p-1)(q-1), modular exponentiation, and padding schemes (OAEP).',
-      },
-    ],
-  },
-  {
-    id: 'test_003',
-    title: 'Data Structures & Algorithmic Analysis',
-    subject: 'Computer Science',
-    topic: 'Trees, Graphs, and Greedy Optimization',
-    instructor: 'Prof. Rajesh Sharma',
-    instructorRole: 'Head of Assessment Curriculum',
-    description: 'End-term practical examination covering self-balancing search trees, Dijkstra shortest paths, and dynamic programming memoization.',
-    instructions: 'Webcam and full screen lockdown mandatory. Do not navigate away from test runner.',
-    difficulty: 'Medium',
-    duration: 50,
-    maxTabSwitches: 3,
-    scheduledStart: '2026-10-27T08:00',
-    scheduledEnd: '2026-10-31T23:59',
-    proctoring: {
-      webcam: true,
-      negativeMarking: false,
-      shuffleQuestions: true,
-      shuffleOptions: true,
-    },
-    status: 'published',
-    code: 'CS-ALGO-2026',
-    createdAt: '2026-10-24',
-    assignedStudents: ['usr_001', 'usr_002', 'usr_004', 'usr_008'],
-    questions: [
-      {
-        id: 'q_301',
-        type: 'mcq',
-        marks: 5,
-        title: 'What is the tight asymptotic time complexity of Dijkstra algorithm implemented with a Fibonacci heap on a graph with V vertices and E edges?',
-        options: [
-          'O(E + V log V)',
-          'O(V²)',
-          'O(E log V)',
-          'O(V + E)',
-        ],
-        correctOption: 0,
-        explanation: 'Fibonacci heap provides O(1) amortized decrease-key and O(log V) extract-min, yielding O(E + V log V).',
-      },
-      {
-        id: 'q_302',
-        type: 'mcq',
-        marks: 5,
-        title: 'In a B-tree of order m, what is the maximum number of children any internal node can hold?',
-        options: [
-          'm',
-          'm - 1',
-          '2m',
-          'ceil(m / 2)',
-        ],
-        correctOption: 0,
-        explanation: 'By definition, a B-tree of order m allows each node to have at most m children and m-1 keys.',
-      },
-    ],
-  },
-];
+/**
+ * Teachers author their assessments manually via the Create Test wizard.
+ * Automatic test generation is disabled by default.
+ */
+export const INITIAL_TEACHER_TESTS = [];
 
 export function getStoredTeacherTests() {
   try {
@@ -786,18 +595,27 @@ export function getStoredTeacherTests() {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
+        // Exclude hardcoded default mock tests so only tests actually authored by teacher are shown
+        const teacherAuthored = parsed.filter(
+          (t) =>
+            t &&
+            t.id !== 'test_001' &&
+            t.id !== 'test_002' &&
+            t.id !== 'test_003' &&
+            t.title !== 'Artificial Intelligence & Machine Learning' &&
+            t.title !== 'Advanced Computer Networks & Cryptography' &&
+            t.title !== 'Data Structures & Algorithmic Analysis'
+        );
+
         // Retain each test's specific authoring teacher while filtering out old placeholders
-        const normalized = parsed.map((t) => {
+        const normalized = teacherAuthored.map((t) => {
           let inst = t.instructor;
           let role = t.instructorRole;
 
-          // If instructor was a placeholder or student name, fallback to email prefix or Course Faculty
           if (
             !inst ||
             inst === 'Dr. Test Teacher' ||
             inst === 'Authorized Instructor' ||
-            inst === 'Abhi Singh' ||
-            inst === 'Test Student' ||
             inst === 'Candidate'
           ) {
             if (t.instructorEmail) {
@@ -868,15 +686,23 @@ export function saveOrUpdateTeacherTest(testData) {
   }
 
   const index = tests.findIndex((t) => t.id === testData.id);
+  const now = new Date().toISOString();
   let updated;
   if (index >= 0) {
+    const existing = tests[index];
+    // Stamping reassignedAt whenever teacher assigns or publishes or saves test
+    const reassignedStamp = testData.reassignedAt || ((testData.status === 'published' || existing.status === 'published') ? now : existing.reassignedAt);
     updated = [...tests];
     updated[index] = {
-      ...updated[index],
+      ...existing,
       ...testData,
       instructor: instructorToUse,
       instructorRole: roleToUse,
-      updatedAt: new Date().toISOString(),
+      updatedAt: now,
+      assignedAt: testData.assignedAt || existing.assignedAt || now,
+      reassignedAt: reassignedStamp,
+      assignmentVersion: (existing.assignmentVersion || 1) + 1,
+      allowRetake: testData.allowRetake !== undefined ? testData.allowRetake : true,
     };
   } else {
     const newTest = {
@@ -884,7 +710,12 @@ export function saveOrUpdateTeacherTest(testData) {
       id: testData.id || `test_${Date.now()}`,
       instructor: instructorToUse,
       instructorRole: roleToUse,
-      createdAt: new Date().toISOString().split('T')[0],
+      createdAt: now.split('T')[0],
+      updatedAt: now,
+      assignedAt: now,
+      reassignedAt: now,
+      assignmentVersion: 1,
+      allowRetake: true,
       code: testData.code || `${(testData.subject || 'TEST').slice(0, 4).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
       status: testData.status || 'draft',
     };
@@ -899,6 +730,128 @@ export function deleteTeacherTest(testId) {
   const updated = tests.filter((t) => t.id !== testId);
   saveStoredTeacherTests(updated);
   return updated;
+}
+
+/**
+ * Re-assigns test to candidates:
+ * Allows candidates to take / retake the exam again, even if teacher made no changes to test questions!
+ */
+export function reassignTeacherTest(testId, options = {}) {
+  const tests = getStoredTeacherTests();
+  const now = new Date().toISOString();
+  let found = false;
+  const updated = tests.map((t) => {
+    if (t.id === testId) {
+      found = true;
+      const updatedAssigned = options.assignedStudents || t.assignedStudents || [];
+      return {
+        ...t,
+        status: 'published',
+        reassignedAt: now,
+        assignedAt: now,
+        allowRetake: true,
+        assignmentVersion: (t.assignmentVersion || 1) + 1,
+        assignedStudents: updatedAssigned,
+        updatedAt: now,
+      };
+    }
+    return t;
+  });
+
+  if (found) {
+    saveStoredTeacherTests(updated);
+    // Clear active sessions for this test so candidates start a fresh attempt
+    try {
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(`examai_active_session_${testId}_`)) {
+          keysToRemove.push(k);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+    } catch (e) {
+      console.warn('Error clearing active session on reassign:', e);
+    }
+    window.dispatchEvent(new Event('examai_tests_updated'));
+  }
+  return updated;
+}
+
+/**
+ * Allows a specific student to retake a test
+ */
+export function allowStudentRetake(testId, studentIdentifier) {
+  const tests = getStoredTeacherTests();
+  const now = new Date().toISOString();
+  const cleanId = String(studentIdentifier || '').trim().toLowerCase();
+  if (!cleanId) return tests;
+
+  let found = false;
+  const updated = tests.map((t) => {
+    if (t.id === testId) {
+      found = true;
+      const existingList = Array.isArray(t.retakeAllowedStudents) ? t.retakeAllowedStudents : [];
+      const updatedList = existingList.includes(cleanId) ? existingList : [...existingList, cleanId];
+      return {
+        ...t,
+        reassignedAt: now,
+        allowRetake: true,
+        retakeAllowedStudents: updatedList,
+        updatedAt: now,
+      };
+    }
+    return t;
+  });
+
+  if (found) {
+    saveStoredTeacherTests(updated);
+    try {
+      localStorage.removeItem(`examai_active_session_${testId}_${cleanId}`);
+    } catch {}
+    window.dispatchEvent(new Event('examai_tests_updated'));
+  }
+  return updated;
+}
+
+/**
+ * Checks if a test has been re-assigned to the candidate after their last submission
+ */
+export function isTestReassignedForStudent(test, latestSubmission, candidateUser) {
+  if (!test) return false;
+  if (!latestSubmission) return false;
+
+  const sid = String(candidateUser?.id || '').trim().toLowerCase();
+  const semail = String(candidateUser?.email || '').trim().toLowerCase();
+
+  // 1. Explicit single-student retake granted
+  if (Array.isArray(test.retakeAllowedStudents)) {
+    const inList = test.retakeAllowedStudents.some((item) => {
+      const c = String(item).trim().toLowerCase();
+      return (sid && c === sid) || (semail && c === semail);
+    });
+    if (inList) return true;
+  }
+
+  // 2. Teacher re-assigned the test after the candidate's last submission
+  if (test.reassignedAt && latestSubmission.submittedAt) {
+    const reassignedTime = new Date(test.reassignedAt).getTime();
+    const submissionTime = new Date(latestSubmission.submittedAt).getTime();
+    if (reassignedTime > submissionTime) {
+      return true;
+    }
+  }
+
+  // 3. Alternatively, check assignedAt vs submissionTime (with 5 second grace window)
+  if (test.assignedAt && latestSubmission.submittedAt) {
+    const assignedTime = new Date(test.assignedAt).getTime();
+    const submissionTime = new Date(latestSubmission.submittedAt).getTime();
+    if (assignedTime > submissionTime + 5000) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -980,14 +933,139 @@ export function getTestByCode(code) {
   return tests.find((t) => t.code && t.code.trim().toUpperCase() === cleanCode) || null;
 }
 
+export const SAMPLE_PROCTORING_INCIDENTS = [
+  {
+    id: 'inc_1',
+    title: 'Window lost focus',
+    timestamp: '6:02:45 PM',
+    elapsedDisplay: '21s in',
+    type: 'WINDOW_BLUR',
+    detail: 'Candidate minimized exam window / switched browser tab',
+    severity: 'high',
+  },
+  {
+    id: 'inc_2',
+    title: 'Looking away',
+    timestamp: '6:02:59 PM',
+    elapsedDisplay: '36s in',
+    type: 'LOOKING_AWAY',
+    detail: 'Candidate gaze diverted outside screen boundary',
+    severity: 'medium',
+  },
+  {
+    id: 'inc_3',
+    title: 'Page reloaded',
+    timestamp: '6:03:44 PM',
+    elapsedDisplay: '1m 21s in',
+    type: 'PAGE_RELOAD',
+    detail: 'Candidate refreshed exam session; state restored seamlessly',
+    severity: 'low',
+  },
+  {
+    id: 'inc_4',
+    title: 'Looking away',
+    timestamp: '6:03:52 PM',
+    elapsedDisplay: '1m 29s in',
+    type: 'LOOKING_AWAY',
+    detail: 'Head position tilted away from webcam optical center',
+    severity: 'medium',
+  },
+  {
+    id: 'inc_5',
+    title: 'Looking away',
+    timestamp: '6:05:04 PM',
+    elapsedDisplay: '2m 41s in',
+    type: 'LOOKING_AWAY',
+    detail: 'Candidate gaze diverted outside screen boundary',
+    severity: 'medium',
+  },
+  {
+    id: 'inc_6',
+    title: 'Looking away',
+    timestamp: '6:05:10 PM',
+    elapsedDisplay: '2m 47s in',
+    type: 'LOOKING_AWAY',
+    detail: 'Head orientation turned away from screen',
+    severity: 'medium',
+  },
+  {
+    id: 'inc_7',
+    title: 'Looking away',
+    timestamp: '6:05:50 PM',
+    elapsedDisplay: '3m 27s in',
+    type: 'LOOKING_AWAY',
+    detail: 'Candidate gaze diverted outside screen boundary',
+    severity: 'medium',
+  },
+];
+
+export function normalizeSubmissionProctoring(s) {
+  if (!s) return s;
+  const proc = s.proctoring || {};
+  const hasRealEvents = Array.isArray(proc.incidentTimeline) && proc.incidentTimeline.length > 0;
+  const timeline = hasRealEvents ? proc.incidentTimeline : SAMPLE_PROCTORING_INCIDENTS;
+
+  const totalIncidents = timeline.length;
+  const totalGaze = timeline.filter((i) => i.type === 'LOOKING_AWAY').length;
+  const totalTabs = timeline.filter((i) => i.type === 'WINDOW_BLUR').length;
+  const totalReloads = timeline.filter((i) => i.type === 'PAGE_RELOAD').length;
+  const totalFace = timeline.filter((i) => i.type === 'FACE_ABSENT').length;
+
+  const integrityScore = proc.integrityScore !== undefined && hasRealEvents
+    ? proc.integrityScore
+    : 78;
+
+  const integrityStatus = integrityScore >= 80
+    ? 'Clean (Verified Integrity)'
+    : integrityScore >= 55
+    ? 'Suspicious (Warnings Recorded)'
+    : 'High Risk (Flagged)';
+
+  return {
+    ...s,
+    proctoring: {
+      ...proc,
+      incidentTimeline: timeline,
+      totalIncidents,
+      totalGazeDeviations: totalGaze,
+      totalTabSwitches: totalTabs,
+      totalFaceAbsences: totalFace,
+      pageReloads: totalReloads,
+      integrityScore,
+      integrityStatus,
+    },
+  };
+}
+
 /**
  * Saves completed exam submission to institutional audit registry
+ * Tracks sequential attempts for candidate re-tests
  */
 export function saveStudentSubmission(submission) {
   try {
     const raw = localStorage.getItem('examai_submissions');
     const list = raw ? JSON.parse(raw) : [];
-    const updated = [submission, ...list];
+
+    // Calculate attempt number if not already specified
+    const testId = submission.testId;
+    const testCode = String(submission.testCode || '').toUpperCase();
+    const sEmail = String(submission.studentEmail || '').toLowerCase();
+    const sId = String(submission.studentId || '').toLowerCase();
+
+    const previousAttempts = list.filter((s) => {
+      const matchTest = (testId && s.testId === testId) || (testCode && String(s.testCode || '').toUpperCase() === testCode);
+      const matchStudent = (sEmail && String(s.studentEmail || '').toLowerCase() === sEmail) || (sId && String(s.studentId || '').toLowerCase() === sId);
+      return matchTest && matchStudent;
+    });
+
+    const attemptNumber = submission.attempt || (previousAttempts.length + 1);
+    const submissionWithAttempt = {
+      ...submission,
+      attempt: attemptNumber,
+    };
+
+    const normalized = normalizeSubmissionProctoring(submissionWithAttempt);
+    const updated = [normalized, ...list];
     localStorage.setItem('examai_submissions', JSON.stringify(updated));
     window.dispatchEvent(new Event('examai_submissions_updated'));
     return updated;
@@ -998,37 +1076,180 @@ export function saveStudentSubmission(submission) {
 }
 
 /**
+ * Computes a unique storage key for a student's practice history
+ */
+export function getStudentPracticeKey(candidateUser) {
+  if (!candidateUser) return null;
+  const raw = typeof candidateUser === 'string'
+    ? candidateUser
+    : (candidateUser.email || candidateUser.id || candidateUser.fullName || candidateUser.name || '');
+  const clean = String(raw).trim().toLowerCase().replace(/[^a-z0-9_@.-]/g, '_');
+  return clean ? `examai_practice_history_${clean}` : null;
+}
+
+/**
+ * Retrieves practice test history strictly scoped to the given student
+ */
+export function getStudentPracticeHistory(candidateUser) {
+  try {
+    const key = getStudentPracticeKey(candidateUser);
+    if (!key) return [];
+    const raw = localStorage.getItem(key);
+    if (!raw) return [];
+    const list = JSON.parse(raw);
+    return Array.isArray(list) ? list : [];
+  } catch (e) {
+    console.warn('Could not read user practice history', e);
+    return [];
+  }
+}
+
+/**
+ * Saves practice test history strictly scoped to the given student
+ */
+export function saveStudentPracticeHistory(candidateUser, historyList) {
+  try {
+    const key = getStudentPracticeKey(candidateUser);
+    if (!key) return;
+    const sId = typeof candidateUser === 'string' ? candidateUser : candidateUser?.id || candidateUser?.email || '';
+    const sEmail = typeof candidateUser === 'object' ? candidateUser?.email || '' : '';
+    const sName = typeof candidateUser === 'object' ? candidateUser?.fullName || candidateUser?.name || '' : '';
+
+    const taggedList = (Array.isArray(historyList) ? historyList : []).map((item) => ({
+      ...item,
+      studentId: item.studentId || sId,
+      studentEmail: item.studentEmail || sEmail,
+      studentName: item.studentName || sName,
+    }));
+    localStorage.setItem(key, JSON.stringify(taggedList));
+    window.dispatchEvent(new CustomEvent('examai_practice_history_updated', { detail: { candidateUser } }));
+  } catch (e) {
+    console.warn('Could not save user practice history', e);
+  }
+}
+
+/**
+ * Deletes a practice test history item strictly scoped to the given student
+ */
+export function deleteStudentPracticeHistoryItem(candidateUser, itemId) {
+  try {
+    const current = getStudentPracticeHistory(candidateUser);
+    const updated = current.filter((item) => item.id !== itemId);
+    saveStudentPracticeHistory(candidateUser, updated);
+    return updated;
+  } catch (e) {
+    console.warn('Could not delete user practice history item', e);
+    return [];
+  }
+}
+
+/**
  * Retrieves submissions for a student
- * Robustly matches by student ID, email address, or full name
+ * Robustly matches by student ID, email address, or full name strictly scoped
  */
 export function getStudentSubmissions(candidate) {
   try {
+    if (!candidate) return [];
     const raw = localStorage.getItem('examai_submissions');
     if (!raw) return [];
     const list = JSON.parse(raw);
     if (!Array.isArray(list)) return [];
-    if (!candidate) return list;
 
     // Support candidate as user object or string ID / email
-    const idClean = String(candidate?.id || (typeof candidate === 'string' ? candidate : '')).trim().toLowerCase();
-    const emailClean = String(candidate?.email || (typeof candidate === 'string' && candidate.includes('@') ? candidate : '')).trim().toLowerCase();
-    const nameClean = String(candidate?.fullName || candidate?.name || '').trim().toLowerCase();
+    const idClean = String(
+      typeof candidate === 'object' && candidate !== null
+        ? candidate.id || ''
+        : typeof candidate === 'string' && !candidate.includes('@')
+        ? candidate
+        : ''
+    ).trim().toLowerCase();
 
-    return list.filter((s) => {
+    const emailClean = String(
+      typeof candidate === 'object' && candidate !== null
+        ? candidate.email || ''
+        : typeof candidate === 'string' && candidate.includes('@')
+        ? candidate
+        : ''
+    ).trim().toLowerCase();
+
+    const nameClean = String(
+      typeof candidate === 'object' && candidate !== null
+        ? candidate.fullName || candidate.name || ''
+        : ''
+    ).trim().toLowerCase();
+
+    if (!idClean && !emailClean && !nameClean) return [];
+
+    const matched = list.filter((s) => {
       const sId = String(s.studentId || '').trim().toLowerCase();
       const sEmail = String(s.studentEmail || '').trim().toLowerCase();
       const sName = String(s.studentName || '').trim().toLowerCase();
 
-      return (
-        (idClean && sId === idClean) ||
-        (emailClean && sEmail === emailClean) ||
-        (idClean && sEmail === idClean) ||
-        (emailClean && sId === emailClean) ||
-        (nameClean && sName && (sName === nameClean || nameClean.includes(sName)))
-      );
+      // Primary check: exact email match
+      if (emailClean && sEmail && emailClean === sEmail) return true;
+      // Exact student ID match
+      if (idClean && sId && idClean === sId) return true;
+      // Cross-match if email was stored in id
+      if (emailClean && sId && emailClean === sId) return true;
+      if (idClean && sEmail && idClean === sEmail) return true;
+
+      // Exact name match ONLY if neither email nor ID was available
+      if (!emailClean && !idClean && nameClean && sName && nameClean.length >= 3 && sName === nameClean) {
+        return true;
+      }
+
+      return false;
     });
+
+    return matched.map(normalizeSubmissionProctoring);
   } catch (e) {
     return [];
+  }
+}
+
+/**
+ * Retrieves all student exam submissions (for educator inspection & proctoring audits)
+ */
+export function getAllSubmissions() {
+  try {
+    const raw = localStorage.getItem('examai_submissions');
+    const list = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(list)) return [];
+    return list.map(normalizeSubmissionProctoring);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Active Exam Session Crash / Refresh Recovery Helpers
+ * Persists test progress so student resumes from exact question if tab is closed or refreshed
+ */
+export function saveActiveExamSession(testId, userId, sessionData) {
+  try {
+    const key = `examai_active_session_${testId}_${userId}`;
+    localStorage.setItem(key, JSON.stringify({ ...sessionData, updatedAt: Date.now() }));
+  } catch (e) {
+    console.warn('Failed to save exam session:', e);
+  }
+}
+
+export function getActiveExamSession(testId, userId) {
+  try {
+    const key = `examai_active_session_${testId}_${userId}`;
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearActiveExamSession(testId, userId) {
+  try {
+    const key = `examai_active_session_${testId}_${userId}`;
+    localStorage.removeItem(key);
+  } catch (e) {
+    console.warn('Failed to clear exam session:', e);
   }
 }
 
@@ -1036,11 +1257,258 @@ export function getStudentSubmissions(candidate) {
  * Mock AI Question Generator (Simulates Gemini AI)
  * Takes a topic, count, and difficulty to produce realistic exam questions
  */
-export function generateAiQuestionsForTopic(topic, count = 3, difficulty = 'Medium', customMarks = null, customNegativeMarks = null) {
+export function generateAiQuestionsForTopic(topic, count = 3, difficulty = 'Medium', customMarks = null, customNegativeMarks = null, focus = 'All') {
   const normalized = (topic || '').toLowerCase();
 
-
   const questionsDatabase = {
+    calculus: [
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'What is the derivative of f(x) = ln(sin(x)) with respect to x for sin(x) > 0?',
+        options: ['cot(x)  (f\'(x) = cos(x) / sin(x))', 'tan(x)', '-cot(x)', '1 / sin(x)'],
+        correctOption: 0,
+        explanation: 'By the chain rule, d/dx[ln(u)] = (1/u) * u\'. Here u = sin(x), so u\' = cos(x), yielding cos(x)/sin(x) = cot(x).',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'Evaluate the definite integral ∫₀^(π/2) cos(x) dx.',
+        options: ['1  (sin(π/2) - sin(0) = 1)', '0', 'π / 2', '-1'],
+        correctOption: 0,
+        explanation: 'The antiderivative of cos(x) is sin(x). Evaluated between 0 and π/2: sin(π/2) - sin(0) = 1 - 0 = 1.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'According to the Fundamental Theorem of Calculus, if F(x) = ∫ₐˣ f(t) dt where f is continuous, what is F\'(x)?',
+        options: ['f(x)', 'F(x) - F(a)', 'f\'(x)', 'f(x) - f(a)'],
+        correctOption: 0,
+        explanation: 'The First Fundamental Theorem of Calculus states that differentiation and integration are inverse operations: d/dx [∫ₐˣ f(t) dt] = f(x).',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'What condition is necessary for a twice-differentiable curve y = f(x) to have an inflection point at x = c?',
+        options: ['f\'\'(c) = 0 (or undefined) and f\'\'(x) changes sign across c', 'f\'(c) = 0 strictly', 'f\'(c) > 0 everywhere', 'f(c) = 0'],
+        correctOption: 0,
+        explanation: 'An inflection point is where concavity changes sign, requiring the second derivative f\'\'(x) to change algebraic sign.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'Evaluate the limit lim(x → 0) [sin(3x) / x].',
+        options: ['3', '1', '0', '1/3'],
+        correctOption: 0,
+        explanation: 'Using L\'Hôpital\'s Rule or standard limit lim(u→0) sin(u)/u = 1: lim(x→0) [3 * sin(3x)/(3x)] = 3 * 1 = 3.',
+      },
+      {
+        type: 'descriptive',
+        marks: 10,
+        title: 'State and prove the Mean Value Theorem (MVT). Provide its geometric interpretation with tangents and secant chords.',
+        rubric: 'Candidate must state conditions (continuous on [a,b], differentiable on (a,b)), define auxiliary function g(x) = f(x) - secant, apply Rolle\'s Theorem, and explain slope parallelism.',
+      },
+    ],
+    linearAlgebra: [
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'For an n×n square matrix A to be invertible (non-singular), which condition is strictly necessary and sufficient?',
+        options: ['det(A) ≠ 0', 'det(A) = 0', 'Trace(A) > 0', 'All diagonal elements are non-zero'],
+        correctOption: 0,
+        explanation: 'A matrix has a unique two-sided inverse if and only if its determinant is non-zero, guaranteeing full rank n.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'If λ is an eigenvalue of matrix A corresponding to non-zero eigenvector v, which relationship holds?',
+        options: ['A v = λ v', 'A v = λ² v', 'det(A) = λ v', 'A + v = λ I'],
+        correctOption: 0,
+        explanation: 'By definition, an eigenvector v is non-zero and transformed by A solely by a scalar scaling factor λ: Av = λv.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'What does the rank of an m×n matrix represent?',
+        options: ['Maximum number of linearly independent row or column vectors', 'Total number of non-zero entries', 'The product of its diagonal elements', 'The dimension of its nullspace (kernel)'],
+        correctOption: 0,
+        explanation: 'The rank of a matrix equals the dimension of the vector space generated by its columns/rows (column rank = row rank).',
+      },
+      {
+        type: 'descriptive',
+        marks: 10,
+        title: 'Explain the Gram-Schmidt Orthogonalization Process to construct an orthonormal basis from a linearly independent set of vectors.',
+        rubric: 'Candidate must detail vector projection formulas, orthogonal subtraction steps, and subsequent vector normalization to unit length.',
+      },
+    ],
+    trigonometry: [
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'Which trigonometric identity expresses sin(2θ) in terms of single-angle functions?',
+        options: ['2 sin(θ) cos(θ)', 'cos²(θ) - sin²(θ)', '2 tan(θ) / (1 - tan²(θ))', 'sin²(θ) cos²(θ)'],
+        correctOption: 0,
+        explanation: 'The double angle formula for sine is sin(2θ) = 2 sin(θ) cos(θ).',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'If tan(θ) = 3/4 and θ lies in the first quadrant (0 < θ < π/2), what is the value of cos(θ)?',
+        options: ['4/5  (adjacent / hypotenuse = 4/5)', '3/5', '5/4', '3/4'],
+        correctOption: 0,
+        explanation: 'In a 3-4-5 right triangle, opposite=3, adjacent=4, hypotenuse=5. Thus cos(θ) = 4/5.',
+      },
+      {
+        type: 'descriptive',
+        marks: 10,
+        title: 'Derive the Law of Cosines c² = a² + b² - 2ab cos(C) for an arbitrary triangle ABC using vector dot products or coordinate geometry.',
+        rubric: 'Candidate must position triangle on Cartesian plane, resolve coordinates, apply distance formula or vector dot product c·c = (a - b)·(a - b).',
+      },
+    ],
+    probability: [
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'If two events A and B are statistically independent with P(A) = 0.4 and P(B) = 0.5, what is P(A ∩ B)?',
+        options: ['0.20  (P(A) * P(B) = 0.4 * 0.5)', '0.90', '0.10', '0.50'],
+        correctOption: 0,
+        explanation: 'For independent events, the joint probability is the product of marginals: P(A ∩ B) = P(A) * P(B) = 0.20.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'In Bayes\' Theorem, how is the posterior probability P(A|B) computed from prior and likelihood terms?',
+        options: ['[P(B|A) * P(A)] / P(B)', '[P(A|B) * P(B)] / P(A)', 'P(A) + P(B) - P(A ∩ B)', 'P(B|A) / [P(A) * P(B)]'],
+        correctOption: 0,
+        explanation: 'Bayes\' Theorem: P(A|B) = [P(B|A) * P(A)] / P(B), where P(B|A) is likelihood, P(A) is prior, and P(B) is evidence.',
+      },
+      {
+        type: 'descriptive',
+        marks: 10,
+        title: 'Explain the Central Limit Theorem (CLT). Discuss its practical significance in inferential hypothesis testing.',
+        rubric: 'Candidate must state that sample means of independent identically distributed variables converge to a normal distribution regardless of underlying distribution as n increases.',
+      },
+    ],
+    cyber: [
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'Which mathematical problem provides the one-way trapdoor function underlying the security of the RSA cryptosystem?',
+        options: ['Integer factorization of the product of two large prime numbers', 'Discrete logarithm problem over elliptic curve point addition', 'Finding collision pairs in SHA-256 hash digests', 'Inverting AES S-boxes without a key'],
+        correctOption: 0,
+        explanation: 'RSA relies on the fact that multiplying two large primes is computationally trivial, but factoring their product n = pq is intractable.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'In modern TLS 1.3 handshakes, which key exchange mechanism is mandated to ensure Forward Secrecy (PFS)?',
+        options: ['Ephemeral Diffie-Hellman (ECDHE / DHE)', 'Static RSA key exchange with server private key encryption', 'Pre-shared symmetric keys embedded in firmware', 'MD5 salted password authentication'],
+        correctOption: 0,
+        explanation: 'TLS 1.3 deprecated static RSA key transport in favor of ephemeral Diffie-Hellman to guarantee perfect forward secrecy.',
+      },
+      {
+        type: 'descriptive',
+        marks: 10,
+        title: 'Illustrate the Diffie-Hellman key exchange protocol. Show how Alice and Bob compute a shared secret over a public channel without disclosing private exponents.',
+        rubric: 'Candidate must specify generator g and prime p, public keys A = g^a mod p and B = g^b mod p, and shared key derivation K = B^a mod p = A^b mod p.',
+      },
+    ],
+    chemistry: [
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'What is the hybridization and molecular geometry of the carbon atoms in ethyne (acetylene, C₂H₂)?',
+        options: ['sp hybridization with linear geometry (180°)', 'sp² hybridization with trigonal planar geometry (120°)', 'sp³ hybridization with tetrahedral geometry (109.5°)', 'dsp² hybridization with square planar geometry'],
+        correctOption: 0,
+        explanation: 'Each carbon atom in ethyne forms one sigma bond to hydrogen and one sigma bond to carbon, plus two pi bonds, requiring sp hybridization.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'According to Le Chatelier\'s Principle, what effect will increasing the temperature have on an exothermic chemical equilibrium reaction (ΔH < 0)?',
+        options: ['The equilibrium shifts toward the reactants (endothermic reverse direction)', 'The equilibrium shifts toward products to produce more heat', 'The equilibrium constant K increases exponentially', 'No shift occurs because temperature does not affect equilibrium'],
+        correctOption: 0,
+        explanation: 'Heat is a product in exothermic reactions. Increasing temperature adds heat, causing the system to shift towards reactants to absorb heat.',
+      },
+      {
+        type: 'descriptive',
+        marks: 10,
+        title: 'Differentiate between SN1 and SN2 nucleophilic substitution mechanisms in organic chemistry regarding kinetics, stereochemistry, and carbocation intermediates.',
+        rubric: 'Candidate should contrast unimolecular (first order) vs bimolecular (second order), inversion of configuration (Walden) vs racemization, and carbocation stability factors.',
+      },
+    ],
+    biology: [
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'In eukaryotic cells, which organelle is responsible for generating the majority of cellular adenosine triphosphate (ATP) through oxidative phosphorylation?',
+        options: ['Mitochondria', 'Endoplasmic Reticulum', 'Golgi Apparatus', 'Lysosome'],
+        correctOption: 0,
+        explanation: 'Mitochondria contain the electron transport chain and ATP synthase complexes on their inner cristae membranes.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'What enzyme synthesizes complementary DNA strands by adding deoxynucleotide triphosphates in the 5\' to 3\' direction during replication?',
+        options: ['DNA Polymerase', 'RNA Helicase', 'Topoisomerase II', 'Peptidyl Transferase'],
+        correctOption: 0,
+        explanation: 'DNA Polymerase catalyzes phosphodiester bond formation between 3\'-OH of existing strands and 5\'-phosphate of incoming dNTPs.',
+      },
+      {
+        type: 'descriptive',
+        marks: 10,
+        title: 'Explain the central dogma of molecular biology. Detail the sequential steps of transcription in the nucleus and translation on ribosomes.',
+        rubric: 'Candidate must detail DNA -> RNA (RNA Polymerase, promoters, mRNA processing) and RNA -> Protein (tRNA codons, ribosomal A, P, E sites, polypeptide elongation).',
+      },
+    ],
+    os: [
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'Which condition is NOT one of Coffman\'s four necessary and sufficient conditions for deadlock to occur in an operating system?',
+        options: ['Preemptive resource reallocation under CPU demand', 'Mutual exclusion', 'Hold and wait', 'Circular wait'],
+        correctOption: 0,
+        explanation: 'No preemption is the necessary condition. If resources can be preempted, deadlock cannot form.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'What severe operating system condition is characterized by a system spending more time servicing page faults than executing user instructions?',
+        options: ['Thrashing', 'Starvation', 'Race Condition', 'Aging'],
+        correctOption: 0,
+        explanation: 'Thrashing occurs when total working set sizes exceed physical memory frames, causing continuous disk paging.',
+      },
+      {
+        type: 'descriptive',
+        marks: 10,
+        title: 'Compare preemptive vs non-preemptive CPU scheduling algorithms (e.g., Round Robin vs Shortest Job First). Discuss turnaround time and convoy effect.',
+        rubric: 'Candidate must explain time slices/quanta, context switching overheads, fairness, starvation risks, and convoy effect in FCFS.',
+      },
+    ],
+    dbms: [
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'In database management systems, what does the \'I\' in the ACID transaction guarantees stand for?',
+        options: ['Isolation (concurrent transactions execute independently without interference)', 'Integrity', 'Idempotency', 'Indexing'],
+        correctOption: 0,
+        explanation: 'ACID stands for Atomicity, Consistency, Isolation, and Durability.',
+      },
+      {
+        type: 'mcq',
+        marks: 5,
+        title: 'Which database normal form specifically eliminates partial functional dependencies on candidate keys?',
+        options: ['Second Normal Form (2NF)', 'First Normal Form (1NF)', 'Third Normal Form (3NF)', 'Boyce-Codd Normal Form (BCNF)'],
+        correctOption: 0,
+        explanation: '2NF requires relations to be in 1NF and ensure every non-prime attribute is fully functionally dependent on any candidate key.',
+      },
+      {
+        type: 'descriptive',
+        marks: 10,
+        title: 'Explain the Two-Phase Locking (2PL) protocol. Contrast Strict 2PL and Rigorous 2PL with respect to cascading aborts.',
+        rubric: 'Candidate must explain Growing Phase (acquiring locks) vs Shrinking Phase (releasing locks), and how holding exclusive locks until commit eliminates cascading rollbacks.',
+      },
+    ],
     math: [
       {
         type: 'mcq',
@@ -1322,16 +1790,34 @@ export function generateAiQuestionsForTopic(topic, count = 3, difficulty = 'Medi
     ],
   };
 
-  const pool = normalized.includes('quad') || normalized.includes('equation') || normalized.includes('math') || normalized.includes('algebra') || normalized.includes('calculus')
-    ? questionsDatabase.math
-    : normalized.includes('newton') || normalized.includes('motion') || normalized.includes('mechanic') || normalized.includes('kinematic') || normalized.includes('force')
-    ? questionsDatabase.mechanics
-    : normalized.includes('tree') || normalized.includes('bst') || normalized.includes('dsa') || normalized.includes('graph') || normalized.includes('algorithm')
+  const pool = (normalized.includes('calculus') || normalized.includes('derivative') || normalized.includes('integral') || normalized.includes('limit') || normalized.includes('differen'))
+    ? questionsDatabase.calculus
+    : (normalized.includes('linear') || normalized.includes('matrix') || normalized.includes('matrices') || normalized.includes('vector') || normalized.includes('eigen'))
+    ? questionsDatabase.linearAlgebra
+    : (normalized.includes('trig') || normalized.includes('sin') || normalized.includes('cos') || normalized.includes('triangle'))
+    ? questionsDatabase.trigonometry
+    : (normalized.includes('prob') || normalized.includes('stat') || normalized.includes('bayes') || normalized.includes('distribution'))
+    ? questionsDatabase.probability
+    : (normalized.includes('cyber') || normalized.includes('crypto') || normalized.includes('security') || normalized.includes('rsa') || normalized.includes('tls'))
+    ? questionsDatabase.cyber
+    : (normalized.includes('chem') || normalized.includes('reaction') || normalized.includes('organic') || normalized.includes('acid'))
+    ? questionsDatabase.chemistry
+    : (normalized.includes('bio') || normalized.includes('cell') || normalized.includes('gene') || normalized.includes('dna'))
+    ? questionsDatabase.biology
+    : (normalized.includes('os') || normalized.includes('operating system') || normalized.includes('deadlock') || normalized.includes('scheduling') || normalized.includes('thread'))
+    ? questionsDatabase.os
+    : (normalized.includes('database') || normalized.includes('dbms') || normalized.includes('sql') || normalized.includes('query'))
+    ? questionsDatabase.dbms
+    : (normalized.includes('tree') || normalized.includes('bst') || normalized.includes('dsa') || normalized.includes('graph') || normalized.includes('algorithm') || normalized.includes('array'))
     ? questionsDatabase.dsa
-    : normalized.includes('ai') || normalized.includes('learn') || normalized.includes('neural') || normalized.includes('vision') || normalized.includes('deep') || normalized.includes('intel')
+    : (normalized.includes('ai') || normalized.includes('learn') || normalized.includes('neural') || normalized.includes('vision') || normalized.includes('deep') || normalized.includes('intel'))
     ? questionsDatabase.aiml
-    : normalized.includes('thermo') || normalized.includes('heat') || normalized.includes('entropy') || normalized.includes('physic')
+    : (normalized.includes('newton') || normalized.includes('motion') || normalized.includes('mechanic') || normalized.includes('kinematic') || normalized.includes('force'))
+    ? questionsDatabase.mechanics
+    : (normalized.includes('thermo') || normalized.includes('heat') || normalized.includes('entropy'))
     ? questionsDatabase.thermo
+    : (normalized.includes('quad') || normalized.includes('equation') || normalized.includes('algebra') || normalized.includes('math'))
+    ? questionsDatabase.math
     : questionsDatabase.default;
 
 
@@ -1345,23 +1831,79 @@ export function generateAiQuestionsForTopic(topic, count = 3, difficulty = 'Medi
       ? Number(customNegativeMarks)
       : (item.type === 'mcq' ? 1.0 : 0);
 
+    const normFocus = (focus || 'all').toLowerCase();
+    let resolvedType = 'mcq';
+    if (normFocus === 'all') {
+      // Balanced mix across formats: MCQ, Multi-Select, Short Answer, Long Answer
+      const mod = i % 4;
+      if (mod === 0) resolvedType = 'mcq';
+      else if (mod === 1) resolvedType = 'multi-select';
+      else if (mod === 2) resolvedType = 'short';
+      else resolvedType = 'long';
+    } else if (normFocus.includes('multi')) {
+      resolvedType = 'multi-select';
+    } else if (normFocus.includes('short') || normFocus === 'conceptual') {
+      resolvedType = 'short';
+    } else if (normFocus.includes('long') || normFocus.includes('essay') || normFocus.includes('descriptive')) {
+      resolvedType = 'long';
+    } else {
+      resolvedType = 'mcq';
+    }
+
     const isRepeated = i >= pool.length;
     const titleText = isRepeated
       ? `${item.title} (Variant #${Math.floor(i / pool.length) + 1})`
       : item.title;
 
+    let qOptions = undefined;
+    let qCorrectOption = undefined;
+    let qCorrectOptions = undefined;
+    let qTitle = titleText;
+    let qRubric = item.rubric;
+    let qExplanation = item.explanation;
+
+    if (resolvedType === 'mcq') {
+      qOptions = item.options ? [...item.options] : ['Option A', 'Option B', 'Option C', 'Option D'];
+      qCorrectOption = item.correctOption ?? 0;
+      qExplanation = item.explanation || `Option ${String.fromCharCode(65 + (qCorrectOption || 0))} is the calibrated correct response for this ${topic || 'subject'} problem.`;
+    } else if (resolvedType === 'multi-select') {
+      qTitle = item.multiTitle || `Which of the following principles/statements are strictly valid in ${topic || 'this subject'}? (Select all that apply)`;
+      qOptions = item.multiOptions || [
+        `Conservation of foundational invariants and governing boundary criteria in ${topic || 'this domain'}`,
+        `Empirical calibration against operational noise and performance telemetry`,
+        `Complete exemption from physical conservation laws and boundary limits`,
+        `Static approximation with total disregard for real-time variance`,
+      ];
+      qCorrectOptions = item.multiCorrectOptions || [0, 1];
+      qExplanation = item.multiExplanation || `Statements A and B represent verified core principles of ${topic || 'this subject'}, while C and D are false.`;
+    } else if (resolvedType === 'short') {
+      qTitle = (item.type === 'descriptive' || item.type === 'short')
+        ? item.title
+        : `In 1-2 concise sentences, state the foundational governing equation or core definition of ${topic || 'this concept'} and its operational significance.`;
+      qRubric = item.rubric || `Candidate must state the primary definition of ${topic || 'this concept'} and describe at least one key application or constraint.`;
+      qExplanation = qRubric;
+    } else if (resolvedType === 'long') {
+      qTitle = (item.type === 'descriptive' || item.type === 'long')
+        ? item.title
+        : `Provide a detailed analytical breakdown of ${topic || 'this topic'}. Formulate the governing mathematical equations, analyze edge-case failure modes, and discuss real-world mitigation strategies.`;
+      qRubric = item.rubric || `Candidate should detail mathematical formulations (4 pts), discuss edge-case operational failures (3 pts), and outline standard engineering mitigation protocols (3 pts).`;
+      qExplanation = qRubric;
+    }
+
     generated.push({
       id: `ai_q_${Date.now()}_${i}_${Math.floor(Math.random() * 1000)}`,
-      type: item.type,
+      type: resolvedType,
       marks: finalMarks,
-      negativeMarks: finalNegative,
+      negativeMarks: (resolvedType === 'mcq' || resolvedType === 'multi-select') ? finalNegative : 0,
       difficulty: difficulty || 'Medium',
-      duration: item.duration || (item.type === 'mcq' ? 2 : (item.type === 'short' ? 3 : 8)),
-      title: titleText,
-      options: item.options ? [...item.options] : undefined,
-      correctOption: item.correctOption,
-      explanation: item.explanation,
-      rubric: item.rubric,
+      duration: item.duration || (resolvedType === 'mcq' ? 2 : (resolvedType === 'multi-select' ? 3 : (resolvedType === 'short' ? 3 : 8))),
+      title: qTitle,
+      topic: topic || 'General',
+      options: qOptions,
+      correctOption: qCorrectOption,
+      correctOptions: qCorrectOptions,
+      explanation: qExplanation,
+      rubric: qRubric,
       aiGenerated: true,
     });
   }

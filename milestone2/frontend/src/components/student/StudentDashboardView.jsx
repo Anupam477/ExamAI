@@ -1,5 +1,11 @@
-import React, { useMemo } from 'react';
-import { getStoredTeacherTests, isStudentAssignedToTest, getStudentSubmissions } from '../../utils/mockApi';
+import React, { useMemo, useState, useEffect } from 'react';
+import {
+  getStoredTeacherTests,
+  isStudentAssignedToTest,
+  getStudentSubmissions,
+  isTestReassignedForStudent,
+  getStudentPracticeHistory,
+} from '../../utils/mockApi';
 
 /**
  * Student Dashboard Overview View
@@ -12,16 +18,27 @@ export default function StudentDashboardView({ candidateUser, onNavigateTab }) {
     return allTests.filter((t) => t.status === 'published' && isStudentAssignedToTest(t, candidateUser));
   }, [allTests, candidateUser]);
 
-  const submissions = getStudentSubmissions(candidateUser?.id || candidateUser?.email);
+  const [submissions, setSubmissions] = useState(() => getStudentSubmissions(candidateUser));
+  const [practiceCount, setPracticeCount] = useState(() => getStudentPracticeHistory(candidateUser).length);
 
-  // Read practice history
-  const practiceCount = useMemo(() => {
-    try {
-      const stored = localStorage.getItem('examai_student_practice_history');
-      if (stored) return JSON.parse(stored).length;
-    } catch {}
-    return 2;
-  }, []);
+  // Keep dashboard metrics strictly user-scoped and live
+  useEffect(() => {
+    const refreshData = () => {
+      setSubmissions(getStudentSubmissions(candidateUser));
+      setPracticeCount(getStudentPracticeHistory(candidateUser).length);
+    };
+
+    refreshData();
+    window.addEventListener('examai_student_test_completed', refreshData);
+    window.addEventListener('examai_submissions_updated', refreshData);
+    window.addEventListener('examai_practice_history_updated', refreshData);
+
+    return () => {
+      window.removeEventListener('examai_student_test_completed', refreshData);
+      window.removeEventListener('examai_submissions_updated', refreshData);
+      window.removeEventListener('examai_practice_history_updated', refreshData);
+    };
+  }, [candidateUser]);
 
   return (
     <div>
@@ -140,48 +157,70 @@ export default function StudentDashboardView({ candidateUser, onNavigateTab }) {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {assignedTests.slice(0, 3).map((test) => (
-                <div
-                  key={test.id}
-                  style={{
-                    padding: '1rem',
-                    borderRadius: '10px',
-                    border: '1px solid var(--sp-border)',
-                    backgroundColor: 'var(--sp-surface-hover)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span className="sp-badge sp-badge-medium">{test.difficulty || 'Medium'}</span>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sp-brand-primary)' }}>
-                        {test.code}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--sp-text-primary)', marginTop: '4px' }}>
-                      {test.title}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--sp-text-muted)', marginTop: '2px' }}>
-                      {test.duration} mins &bull; {test.questions?.length || 0} questions
-                    </div>
-                  </div>
+              {assignedTests.slice(0, 3).map((test) => {
+                const sub = submissions.find(
+                  (s) => s.testId === test.id || (s.testCode && s.testCode.toUpperCase() === (test.code || '').toUpperCase())
+                );
+                const isReassigned = isTestReassignedForStudent(test, sub, candidateUser);
 
-                  <button
-                    type="button"
-                    className="sp-btn-subtle"
+                return (
+                  <div
+                    key={test.id}
                     style={{
-                      backgroundColor: 'var(--sp-brand-primary)',
-                      color: '#FFFFFF',
-                      borderColor: 'var(--sp-brand-primary)',
+                      padding: '1rem',
+                      borderRadius: '10px',
+                      border: '1px solid var(--sp-border)',
+                      backgroundColor: 'var(--sp-surface-hover)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
                     }}
-                    onClick={() => onNavigateTab('tests')}
                   >
-                    Enter Exam &rarr;
-                  </button>
-                </div>
-              ))}
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className="sp-badge sp-badge-medium">{test.difficulty || 'Medium'}</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--sp-brand-primary)' }}>
+                          {test.code}
+                        </span>
+                        {isReassigned && (
+                          <span
+                            style={{
+                              fontSize: '0.6875rem',
+                              fontWeight: 700,
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              backgroundColor: '#FEF3C7',
+                              color: '#92400E',
+                            }}
+                          >
+                            🔄 Re-assigned
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--sp-text-primary)', marginTop: '4px' }}>
+                        {test.title}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--sp-text-muted)', marginTop: '2px' }}>
+                        {test.duration} mins &bull; {test.questions?.length || 0} questions
+                        {sub && !isReassigned && ` • Recorded Score: ${sub.score}/${sub.totalMarks}`}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="sp-btn-subtle"
+                      style={{
+                        backgroundColor: isReassigned ? '#D97706' : 'var(--sp-brand-primary)',
+                        color: '#FFFFFF',
+                        borderColor: isReassigned ? '#D97706' : 'var(--sp-brand-primary)',
+                      }}
+                      onClick={() => onNavigateTab('tests')}
+                    >
+                      {isReassigned ? 'Re-test Ready →' : sub ? 'View Test →' : 'Enter Exam →'}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

@@ -1,166 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import PracticeTestRunnerModal from './PracticeTestRunnerModal';
 import PracticeResultModal from './PracticeResultModal';
-
-// Initial realistic practice history matching user screenshot
-const INITIAL_PRACTICE_HISTORY = [
-  {
-    id: 'hist_thermo_01',
-    title: 'laws of thermodynamics practice',
-    subject: 'Physics',
-    topic: 'Laws of Thermodynamics',
-    difficulty: 'Hard',
-    questionsCount: 4,
-    score: 50,
-    bestOfCount: 2,
-    timestampDisplay: '7 minutes ago',
-    correctCount: 2,
-    totalQuestions: 4,
-    timeTakenDisplay: '14 mins',
-    questions: [
-      {
-        id: 'thermo_1',
-        num: 1,
-        type: 'mcq',
-        marks: 1,
-        question: 'What thermodynamic quantity is described as the microscopic measure of molecular disorder and irreversible dissipation in a closed system?',
-        options: [
-          'Entropy (S)',
-          'Enthalpy (H)',
-          'Internal Energy (U)',
-          'Gibbs Free Energy (G)',
-        ],
-        correctOption: 0,
-        explanation: 'Entropy (S) quantifies microscopic multiplicity and the irreversible dissipation of usable work into thermal energy.',
-      },
-      {
-        id: 'thermo_2',
-        num: 2,
-        type: 'mcq',
-        marks: 1,
-        question: 'Which thermodynamic process occurs strictly under constant pressure in a cylinder-piston system?',
-        options: [
-          'Isobaric process (dP = 0)',
-          'Isochoric process (dV = 0)',
-          'Isothermal process (dT = 0)',
-          'Adiabatic process (dQ = 0)',
-        ],
-        correctOption: 0,
-        explanation: 'Isobaric signifies constant pressure throughout the state change.',
-      },
-      {
-        id: 'thermo_3',
-        num: 3,
-        type: 'multi-select',
-        marks: 2,
-        question: 'Select all thermodynamic properties that are state functions (independent of the path taken between equilibrium states):',
-        options: [
-          'Internal Energy (U)',
-          'Heat transferred (Q)',
-          'Entropy (S)',
-          'Work done by the system (W)',
-        ],
-        correctOptions: [0, 2],
-        explanation: 'Internal Energy and Entropy are state functions depending only on initial and final states. Heat (Q) and Work (W) are path-dependent quantities.',
-      },
-      {
-        id: 'thermo_4',
-        num: 4,
-        type: 'long-answer',
-        marks: 5,
-        question: 'State the Second Law of Thermodynamics (Kelvin-Planck and Clausius statements) and derive the theoretical maximum efficiency of a Carnot heat engine operating between temperatures Th and Tc. You may write your derivation on paper and capture/upload a photo, or type below.',
-        modelAnswer: 'The Kelvin-Planck statement states no heat engine can produce continuous work by absorbing heat from a single reservoir with 100% efficiency. Clausius statement states heat cannot spontaneously flow from cold to hot without external work. Carnot efficiency is derived as η = 1 - (Tc / Th).',
-        explanation: 'Full credit requires stating both classical formulations and deriving the Carnot efficiency formula η = 1 - (Tc / Th) with temperature in Kelvin.',
-      },
-    ],
-    review: [
-      {
-        question: 'What thermodynamic quantity is described as the microscopic measure of molecular disorder and irreversible dissipation in a closed system?',
-        type: 'mcq',
-        options: ['Entropy (S)', 'Enthalpy (H)', 'Internal Energy (U)', 'Gibbs Free Energy (G)'],
-        studentAnswer: 0,
-        correctAnswer: 0,
-        isCorrect: true,
-        explanation: 'Entropy (S) quantifies the microscopic multiplicity and irreversible dissipation of energy.',
-      },
-      {
-        question: 'Which thermodynamic process occurs strictly under constant pressure in a cylinder-piston system?',
-        type: 'mcq',
-        options: ['Isobaric process (dP = 0)', 'Isochoric process (dV = 0)', 'Isothermal process (dT = 0)', 'Adiabatic process (dQ = 0)'],
-        studentAnswer: 1,
-        correctAnswer: 0,
-        isCorrect: false,
-        explanation: 'Isobaric signifies constant pressure (dP = 0).',
-      },
-    ],
-  },
-  {
-    id: 'hist_oops_02',
-    title: 'oops practice',
-    subject: 'Computer Science',
-    topic: 'Object-Oriented Programming (OOPS)',
-    difficulty: 'Medium',
-    questionsCount: 3,
-    score: 66,
-    bestOfCount: 1,
-    timestampDisplay: '38 minutes ago',
-    correctCount: 2,
-    totalQuestions: 3,
-    timeTakenDisplay: '8 mins',
-    questions: [
-      {
-        id: 'oops_1',
-        num: 1,
-        type: 'mcq',
-        marks: 1,
-        question: 'Which OOP pillar promotes information hiding by bundling data and methods into a single class unit and restricting direct outside access?',
-        options: [
-          'Encapsulation',
-          'Polymorphism',
-          'Inheritance',
-          'Composition',
-        ],
-        correctOption: 0,
-        explanation: 'Encapsulation restricts direct access to internal object components.',
-      },
-      {
-        id: 'oops_2',
-        num: 2,
-        type: 'multi-select',
-        marks: 2,
-        question: 'Select all mechanisms that support runtime polymorphism in object-oriented languages:',
-        options: [
-          'Virtual method table (vtable) dispatch',
-          'Method overriding in derived subclasses',
-          'Compile-time operator overloading',
-          'Interface / abstract base class dynamic binding',
-        ],
-        correctOptions: [0, 1, 3],
-        explanation: 'Vtables, method overriding, and dynamic interface binding occur at runtime. Operator overloading is resolved at compile time.',
-      },
-      {
-        id: 'oops_3',
-        num: 3,
-        type: 'short-answer',
-        marks: 5,
-        question: 'Explain the difference between Composition and Inheritance with a real-world software architecture diagram or code example. You may write on paper and capture/upload a photo, or type below.',
-        modelAnswer: 'Inheritance represents an "is-a" relationship, creating tight coupling between subclass and superclass. Composition represents a "has-a" relationship, promoting loose coupling and runtime flexibility by delegating responsibilities to contained components.',
-        explanation: 'Favours "composition over inheritance" design principle for modularity and testability.',
-      },
-    ],
-    review: [
-      {
-        question: 'Which OOP pillar promotes information hiding by bundling data and methods into a single class unit and restricting direct outside access?',
-        type: 'mcq',
-        options: ['Encapsulation', 'Polymorphism', 'Inheritance', 'Composition'],
-        studentAnswer: 0,
-        correctAnswer: 0,
-        isCorrect: true,
-        explanation: 'Encapsulation restricts direct access to internal object components.',
-      },
-    ],
-  },
-];
+import {
+  getStudentPracticeHistory,
+  saveStudentPracticeHistory,
+  deleteStudentPracticeHistoryItem,
+} from '../../utils/mockApi';
 
 // Quick topic suggestion pills matching screenshot
 const QUICK_SUGGESTIONS = [
@@ -171,7 +16,7 @@ const QUICK_SUGGESTIONS = [
   { label: 'Periodic table trends', subject: 'Chemistry', topic: 'Periodic table trends' },
 ];
 
-export default function StudentPracticeView({ onShowToast, onNavigateTab }) {
+export default function StudentPracticeView({ candidateUser, onShowToast, onNavigateTab }) {
   // Practice configuration form state
   const [subject, setSubject] = useState('');
   const [topic, setTopic] = useState('');
@@ -186,24 +31,28 @@ export default function StudentPracticeView({ onShowToast, onNavigateTab }) {
   const [durationMinutes, setDurationMinutes] = useState(15);
   const [selectedChip, setSelectedChip] = useState(null);
 
-  // Practice history persisted in localStorage
+  // Practice history strictly scoped to the logged-in candidate user
   const [historyList, setHistoryList] = useState(() => {
-    try {
-      const stored = localStorage.getItem('examai_student_practice_history');
-      if (stored) return JSON.parse(stored);
-    } catch (e) {
-      console.warn('Could not read practice history', e);
-    }
-    return INITIAL_PRACTICE_HISTORY;
+    return getStudentPracticeHistory(candidateUser);
   });
+
+  // Re-sync whenever the candidate user changes
+  useEffect(() => {
+    setHistoryList(getStudentPracticeHistory(candidateUser));
+  }, [candidateUser?.id, candidateUser?.email]);
+
+  // Keep history synced across tabs or background updates
+  useEffect(() => {
+    const handleUpdate = () => {
+      setHistoryList(getStudentPracticeHistory(candidateUser));
+    };
+    window.addEventListener('examai_practice_history_updated', handleUpdate);
+    return () => window.removeEventListener('examai_practice_history_updated', handleUpdate);
+  }, [candidateUser]);
 
   const saveHistory = (items) => {
     setHistoryList(items);
-    try {
-      localStorage.setItem('examai_student_practice_history', JSON.stringify(items));
-    } catch (e) {
-      console.warn('Could not save practice history', e);
-    }
+    saveStudentPracticeHistory(candidateUser, items);
   };
 
   // Modals state
@@ -301,8 +150,8 @@ export default function StudentPracticeView({ onShowToast, onNavigateTab }) {
 
   // Delete an item from practice history
   const handleDeleteHistory = (id) => {
-    const updated = historyList.filter((item) => item.id !== id);
-    saveHistory(updated);
+    const updated = deleteStudentPracticeHistoryItem(candidateUser, id);
+    setHistoryList(updated);
     if (onShowToast) onShowToast('Practice test removed from history.');
   };
 
@@ -310,6 +159,9 @@ export default function StudentPracticeView({ onShowToast, onNavigateTab }) {
   const handlePracticeSubmitted = (resultPayload) => {
     const newEntry = {
       ...resultPayload,
+      studentId: candidateUser?.id || candidateUser?.email || '',
+      studentEmail: candidateUser?.email || '',
+      studentName: candidateUser?.fullName || candidateUser?.name || '',
       bestOfCount: 1,
       type: 'practice',
     };
@@ -685,6 +537,7 @@ export default function StudentPracticeView({ onShowToast, onNavigateTab }) {
       {activeRunnerConfig && (
         <PracticeTestRunnerModal
           practiceConfig={activeRunnerConfig}
+          candidateUser={candidateUser}
           onClose={() => setActiveRunnerConfig(null)}
           onSubmitResult={handlePracticeSubmitted}
         />

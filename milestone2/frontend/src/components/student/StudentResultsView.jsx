@@ -1,117 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { getStudentSubmissions } from '../../utils/mockApi';
-
-// Default mock questions for initial fallback when no tests have been taken yet
-const DEFAULT_FALLBACK_TESTS = [
-  {
-    id: 'res_bst_01',
-    title: 'Binary search trees practice',
-    subject: 'Computer Science',
-    topic: 'Binary Search Trees',
-    type: 'practice',
-    difficulty: 'Medium',
-    percentage: 67,
-    score: 10,
-    totalMarks: 15,
-    correctCount: 2,
-    wrongCount: 1,
-    skippedCount: 0,
-    totalQuestions: 3,
-    timeTakenDisplay: '12 mins',
-    timestampDisplay: 'Today, 5:25 PM',
-    review: [
-      {
-        num: 1,
-        type: 'Multiple choice',
-        status: 'correct',
-        marks: '5 / 5',
-        question: 'What is the worst-case time complexity of searching for an element in an unbalanced Binary Search Tree (BST) with N nodes?',
-        options: [
-          { letter: 'A', text: 'O(N) - degenerate linear linked list structure', isCorrect: true },
-          { letter: 'B', text: 'O(log N) - balanced height branching', isCorrect: false },
-          { letter: 'C', text: 'O(1) - hash table direct lookup', isCorrect: false },
-          { letter: 'D', text: 'O(N log N) - divide and conquer sort', isCorrect: false },
-        ],
-        studentSelected: 'A',
-        explanation: 'When elements are inserted in strictly sorted order, a standard BST degenerates into a linear linked list of height N. Lookup requires inspecting every node from root to leaf, giving O(N) runtime.',
-      },
-      {
-        num: 2,
-        type: 'Multi-select',
-        status: 'correct',
-        marks: '5 / 5',
-        question: 'Select all valid self-balancing tree invariants and balance factor properties that apply to AVL Trees:',
-        options: [
-          { letter: 'A', text: 'The height difference between left and right subtrees cannot exceed 1', isCorrect: true },
-          { letter: 'B', text: 'Every node has a balance factor in {-1, 0, +1}', isCorrect: true },
-          { letter: 'C', text: 'Insertions always require an exponential number of rotations in worst-case', isCorrect: false },
-          { letter: 'D', text: 'Worst-case search, insert, and delete run in guaranteed O(log N) time', isCorrect: true },
-        ],
-        studentSelected: 'A, B, D',
-        explanation: 'Options A, B, and D are valid AVL invariants. Rotations are bounded by O(1) for insertion and O(log N) for deletion, never exponential.',
-      },
-      {
-        num: 3,
-        type: 'Written response',
-        status: 'wrong',
-        marks: '0 / 5',
-        question: 'Derive and illustrate the Left-Right (LR) double rotation on an AVL tree. You can write your step-by-step derivation on paper and attach photo, or type below.',
-        studentAnswer: 'Incomplete derivation.',
-        modelAnswer: 'An LR imbalance occurs when a node has a balance factor of +2 and its left child has a balance factor of -1. Resolution requires a Left Rotation on the left child, transforming it into an LL configuration, followed by a Right Rotation on the unbalanced ancestor node.',
-        explanation: 'Full marks awarded for correctly identifying the 2-step rotation mechanism (Left rotation on child, Right rotation on root) and height invariance.',
-      },
-    ],
-  },
-  {
-    id: 'res_thermo_02',
-    title: 'Laws of thermodynamics practice',
-    subject: 'Physics',
-    topic: 'Thermodynamics',
-    type: 'practice',
-    difficulty: 'Hard',
-    percentage: 50,
-    score: 6,
-    totalMarks: 12,
-    correctCount: 1,
-    wrongCount: 1,
-    skippedCount: 0,
-    totalQuestions: 2,
-    timeTakenDisplay: '14 mins',
-    timestampDisplay: 'Yesterday, 3:10 PM',
-    review: [
-      {
-        num: 1,
-        type: 'Multiple choice',
-        status: 'correct',
-        marks: '6 / 6',
-        question: 'What thermodynamic quantity is described as the microscopic measure of molecular disorder and irreversible dissipation in a closed system?',
-        options: [
-          { letter: 'A', text: 'Entropy (S)', isCorrect: true },
-          { letter: 'B', text: 'Enthalpy (H)', isCorrect: false },
-          { letter: 'C', text: 'Internal Energy (U)', isCorrect: false },
-          { letter: 'D', text: 'Gibbs Free Energy (G)', isCorrect: false },
-        ],
-        studentSelected: 'A',
-        explanation: 'Entropy (S) quantifies the microscopic multiplicity and irreversibility of energy distribution.',
-      },
-      {
-        num: 2,
-        type: 'Multiple choice',
-        status: 'wrong',
-        marks: '0 / 6',
-        question: 'Which thermodynamic process occurs strictly under constant pressure in a cylinder-piston system?',
-        options: [
-          { letter: 'A', text: 'Isobaric process (dP = 0)', isCorrect: true },
-          { letter: 'B', text: 'Isochoric process (dV = 0)', isCorrect: false },
-          { letter: 'C', text: 'Isothermal process (dT = 0)', isCorrect: false },
-          { letter: 'D', text: 'Adiabatic process (dQ = 0)', isCorrect: false },
-        ],
-        studentSelected: 'B',
-        explanation: 'Isobaric signifies constant pressure throughout the state change (dP = 0).',
-      },
-    ],
-  },
-];
+import { getStudentSubmissions, getStudentPracticeHistory } from '../../utils/mockApi';
 
 export default function StudentResultsView({ candidateUser, onNavigateTab }) {
   const [filter, setFilter] = useState('all'); // 'all' | 'correct' | 'lost' | 'skipped'
@@ -124,10 +12,12 @@ export default function StudentResultsView({ candidateUser, onNavigateTab }) {
     const handleSync = () => setRefreshTrigger((prev) => prev + 1);
     window.addEventListener('examai_student_test_completed', handleSync);
     window.addEventListener('examai_submissions_updated', handleSync);
+    window.addEventListener('examai_practice_history_updated', handleSync);
     window.addEventListener('storage', handleSync);
     return () => {
       window.removeEventListener('examai_student_test_completed', handleSync);
       window.removeEventListener('examai_submissions_updated', handleSync);
+      window.removeEventListener('examai_practice_history_updated', handleSync);
       window.removeEventListener('storage', handleSync);
     };
   }, []);
@@ -136,136 +26,136 @@ export default function StudentResultsView({ candidateUser, onNavigateTab }) {
   const allTests = useMemo(() => {
     const combined = [];
 
-    // 1. Fetch formal academic exam submissions
+    // 1. Fetch formal academic exam submissions strictly for candidateUser
     try {
-      const studentId = candidateUser?.id || candidateUser?.email || 'usr_002';
-      const academicSubs = getStudentSubmissions(studentId);
-      if (Array.isArray(academicSubs) && academicSubs.length > 0) {
-        academicSubs.forEach((sub, idx) => {
-          combined.push({
-            id: sub.id || `academic_${idx}`,
-            title: sub.testTitle || sub.title || 'Academic Examination',
-            subject: sub.subject || 'Computer Science',
-            topic: sub.topic || sub.testTitle || 'Exam',
-            type: 'academic',
-            testCode: sub.testCode || '',
-            difficulty: sub.difficulty || 'Medium',
-            percentage: sub.percentage !== undefined ? Number(sub.percentage) : Math.round(((sub.score || 0) / (sub.totalMarks || 100)) * 100),
-            score: sub.score !== undefined ? sub.score : 0,
-            totalMarks: sub.totalMarks || 100,
-            correctCount: sub.correctCount || 0,
-            wrongCount: sub.wrongCount !== undefined ? sub.wrongCount : Math.max(0, (sub.totalQuestions || 0) - (sub.correctCount || 0)),
-            skippedCount: sub.skippedCount || 0,
-            totalQuestions: sub.totalQuestions || (sub.review ? sub.review.length : 0),
-            timeTakenDisplay: sub.timeTakenDisplay || '30 mins',
-            timestampDisplay: sub.timestampDisplay || (sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently'),
-            questions: sub.questions || [],
-            review: sub.review || [],
-            submittedAt: sub.submittedAt || new Date().toISOString(),
+      if (candidateUser) {
+        const academicSubs = getStudentSubmissions(candidateUser);
+        if (Array.isArray(academicSubs) && academicSubs.length > 0) {
+          academicSubs.forEach((sub, idx) => {
+            combined.push({
+              id: sub.id || `academic_${idx}`,
+              title: sub.testTitle || sub.title || 'Academic Examination',
+              subject: sub.subject || 'Computer Science',
+              topic: sub.topic || sub.testTitle || 'Exam',
+              type: 'academic',
+              testCode: sub.testCode || '',
+              difficulty: sub.difficulty || 'Medium',
+              percentage: sub.percentage !== undefined ? Number(sub.percentage) : Math.round(((sub.score || 0) / (sub.totalMarks || 100)) * 100),
+              score: sub.score !== undefined ? sub.score : 0,
+              totalMarks: sub.totalMarks || 100,
+              correctCount: sub.correctCount || 0,
+              wrongCount: sub.wrongCount !== undefined ? sub.wrongCount : Math.max(0, (sub.totalQuestions || 0) - (sub.correctCount || 0)),
+              skippedCount: sub.skippedCount || 0,
+              totalQuestions: sub.totalQuestions || (sub.review ? sub.review.length : 0),
+              timeTakenDisplay: sub.timeTakenDisplay || '30 mins',
+              timestampDisplay: sub.timestampDisplay || (sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently'),
+              questions: sub.questions || [],
+              review: sub.review || [],
+              proctoring: sub.proctoring || {},
+              submittedAt: sub.submittedAt || new Date().toISOString(),
+            });
           });
-        });
+        }
       }
     } catch (e) {
       console.warn('Could not read academic submissions:', e);
     }
 
-    // 2. Fetch AI Practice session history
+    // 2. Fetch AI Practice session history strictly for candidateUser
     try {
-      const rawPractice = localStorage.getItem('examai_student_practice_history');
-      if (rawPractice) {
-        const parsedPractice = JSON.parse(rawPractice);
-        if (Array.isArray(parsedPractice) && parsedPractice.length > 0) {
-          parsedPractice.forEach((p, idx) => {
-            // Check if already in combined
-            if (!combined.some((t) => t.id === p.id)) {
-              // Normalize review questions
-              const normalizedReview = (p.review || []).map((r, rIdx) => {
-                const isCorrect = Boolean(r.isCorrect);
-                const marksVal = r.marks ? r.marks : isCorrect ? '5 / 5' : '0 / 5';
+      const parsedPractice = getStudentPracticeHistory(candidateUser);
+      if (Array.isArray(parsedPractice) && parsedPractice.length > 0) {
+        parsedPractice.forEach((p, idx) => {
+          // Check if already in combined
+          if (!combined.some((t) => t.id === p.id)) {
+            // Normalize review questions
+            const normalizedReview = (p.review || []).map((r, rIdx) => {
+              const isCorrect = Boolean(r.isCorrect);
+              const marksVal = r.marks ? r.marks : isCorrect ? '5 / 5' : '0 / 5';
 
-                let optionsList = undefined;
-                if (Array.isArray(r.options)) {
-                  optionsList = r.options.map((opt, oIdx) => {
-                    const text = typeof opt === 'object' && opt ? opt.text || opt : String(opt);
-                    const isOptionCorrect =
-                      r.type === 'multi-select'
-                        ? Array.isArray(r.correctAnswer) && r.correctAnswer.includes(oIdx)
-                        : r.correctAnswer === oIdx;
-                    return {
-                      letter: String.fromCharCode(65 + oIdx),
-                      text,
-                      isCorrect: isOptionCorrect,
-                    };
-                  });
-                }
+              let optionsList = undefined;
+              if (Array.isArray(r.options)) {
+                optionsList = r.options.map((opt, oIdx) => {
+                  const text = typeof opt === 'object' && opt ? opt.text || opt : String(opt);
+                  const isOptionCorrect =
+                    r.type === 'multi-select'
+                      ? Array.isArray(r.correctAnswer) && r.correctAnswer.includes(oIdx)
+                      : r.correctAnswer === oIdx;
+                  return {
+                    letter: String.fromCharCode(65 + oIdx),
+                    text,
+                    isCorrect: isOptionCorrect,
+                  };
+                });
+              }
 
-                let studentSelected = '';
-                if (typeof r.studentAnswer === 'number') {
-                  studentSelected = String.fromCharCode(65 + r.studentAnswer);
-                } else if (Array.isArray(r.studentAnswer)) {
-                  studentSelected = r.studentAnswer.map((i) => String.fromCharCode(65 + i)).join(', ');
-                } else if (typeof r.studentAnswer === 'string') {
-                  studentSelected = r.studentAnswer;
-                }
+              let studentSelected = '';
+              if (typeof r.studentAnswer === 'number') {
+                studentSelected = String.fromCharCode(65 + r.studentAnswer);
+              } else if (Array.isArray(r.studentAnswer)) {
+                studentSelected = r.studentAnswer.map((i) => String.fromCharCode(65 + i)).join(', ');
+              } else if (typeof r.studentAnswer === 'string') {
+                studentSelected = r.studentAnswer;
+              }
 
-                return {
-                  num: rIdx + 1,
-                  type: r.type === 'multi-select' ? 'Multi-select' : r.type === 'short-answer' || r.type === 'long-answer' || r.type === 'descriptive' ? 'Written response' : 'Multiple choice',
-                  status: isCorrect ? 'correct' : (r.studentAnswer === undefined || r.studentAnswer === '' || r.studentAnswer === null ? 'skipped' : 'wrong'),
-                  marks: marksVal,
-                  question: r.question,
-                  options: optionsList,
-                  studentSelected,
-                  studentAnswer: typeof r.studentAnswer === 'string' ? r.studentAnswer : undefined,
-                  studentImage: r.studentImage,
-                  fileName: r.fileName,
-                  explanation: r.explanation || 'Instant AI evaluation criteria applied.',
-                };
-              });
+              return {
+                num: rIdx + 1,
+                type: r.type === 'multi-select' ? 'Multi-select' : r.type === 'short-answer' || r.type === 'long-answer' || r.type === 'descriptive' ? 'Written response' : 'Multiple choice',
+                status: isCorrect ? 'correct' : (r.studentAnswer === undefined || r.studentAnswer === '' || r.studentAnswer === null ? 'skipped' : 'wrong'),
+                marks: marksVal,
+                question: r.question,
+                options: optionsList,
+                studentSelected,
+                studentAnswer: typeof r.studentAnswer === 'string' ? r.studentAnswer : undefined,
+                studentImage: r.studentImage,
+                fileName: r.fileName,
+                explanation: r.explanation || 'Instant AI evaluation criteria applied.',
+              };
+            });
 
-              combined.push({
-                id: p.id || `practice_${idx}`,
-                title: p.title || `${p.topic || 'General'} practice`,
-                subject: p.subject || 'General Studies',
-                topic: p.topic || p.title || 'Practice Topic',
-                type: 'practice',
-                difficulty: p.difficulty || 'Medium',
-                percentage: p.percentage !== undefined ? Number(p.percentage) : Number(p.score) || 0,
-                score: p.correctCount || (p.score ? Math.round((p.score / 100) * (p.totalQuestions || 5)) : 0),
-                totalMarks: p.totalQuestions ? p.totalQuestions * 5 : 25,
-                correctCount: p.correctCount || 0,
-                wrongCount: Math.max(0, (p.totalQuestions || 0) - (p.correctCount || 0)),
-                skippedCount: 0,
-                totalQuestions: p.totalQuestions || p.questionsCount || 0,
-                timeTakenDisplay: p.timeTakenDisplay || '12 mins',
-                timestampDisplay: p.timestampDisplay || 'Recently',
-                questions: p.questions || [],
-                review: normalizedReview,
-                submittedAt: p.submittedAt || new Date().toISOString(),
-              });
-            }
-          });
-        }
+            combined.push({
+              id: p.id || `practice_${idx}`,
+              title: p.title || `${p.topic || 'General'} practice`,
+              subject: p.subject || 'General Studies',
+              topic: p.topic || p.title || 'Practice Topic',
+              type: 'practice',
+              difficulty: p.difficulty || 'Medium',
+              percentage: p.percentage !== undefined ? Number(p.percentage) : Number(p.score) || 0,
+              score: p.correctCount || (p.score ? Math.round((p.score / 100) * (p.totalQuestions || 5)) : 0),
+              totalMarks: p.totalQuestions ? p.totalQuestions * 5 : 25,
+              correctCount: p.correctCount || 0,
+              wrongCount: Math.max(0, (p.totalQuestions || 0) - (p.correctCount || 0)),
+              skippedCount: 0,
+              totalQuestions: p.totalQuestions || p.questionsCount || 0,
+              timeTakenDisplay: p.timeTakenDisplay || '12 mins',
+              timestampDisplay: p.timestampDisplay || 'Recently',
+              questions: p.questions || [],
+              review: normalizedReview,
+              submittedAt: p.submittedAt || new Date().toISOString(),
+            });
+          }
+        });
       }
     } catch (e) {
       console.warn('Could not read practice history:', e);
-    }
-
-    // 3. Fallback to default mock tests if user has not taken any tests yet
-    if (combined.length === 0) {
-      return DEFAULT_FALLBACK_TESTS;
     }
 
     return combined;
   }, [candidateUser, refreshTrigger]);
 
   // Selected test state (defaults to the first/most recent test)
-  const [selectedTestId, setSelectedTestId] = useState(allTests[0]?.id || 'res_bst_01');
+  const [selectedTestId, setSelectedTestId] = useState(allTests[0]?.id || null);
+
+  useEffect(() => {
+    if (!selectedTestId || !allTests.some((t) => t.id === selectedTestId)) {
+      setSelectedTestId(allTests[0]?.id || null);
+    }
+  }, [allTests, selectedTestId]);
 
   // Auto-select latest test if current selected is no longer valid
   const activeTest = useMemo(() => {
     const found = allTests.find((t) => t.id === selectedTestId);
-    return found || allTests[0] || DEFAULT_FALLBACK_TESTS[0];
+    return found || allTests[0] || null;
   }, [allTests, selectedTestId]);
 
   // Filtered test attempt tabs (All | Academic | Practice)
@@ -282,6 +172,7 @@ export default function StudentResultsView({ candidateUser, onNavigateTab }) {
 
   // Filtered question review list based on active pill
   const filteredQuestions = useMemo(() => {
+    if (!activeTest) return [];
     const list = activeTest.review || [];
     if (filter === 'correct') {
       return list.filter((q) => q.status === 'correct');
@@ -299,6 +190,7 @@ export default function StudentResultsView({ candidateUser, onNavigateTab }) {
   const { objectiveScore, writtenScore } = useMemo(() => {
     let obj = 0;
     let wri = 0;
+    if (!activeTest) return { objectiveScore: 0, writtenScore: 0 };
     (activeTest.review || []).forEach((q) => {
       if (q.status === 'correct') {
         if (q.type === 'Written response') {
@@ -312,11 +204,58 @@ export default function StudentResultsView({ candidateUser, onNavigateTab }) {
   }, [activeTest]);
 
   // SVG Circular Meter Calculation (radius = 36, circumference = 226)
-  const scorePercent = Math.min(100, Math.max(0, activeTest.percentage || 0));
+  const scorePercent = Math.min(100, Math.max(0, activeTest?.percentage || 0));
   const radius = 36;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (scorePercent / 100) * circumference;
   const isPassing = scorePercent >= 40;
+
+  // Render friendly empty state if the candidate has taken no exams or practice tests yet
+  if (allTests.length === 0) {
+    return (
+      <div>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--sp-brand)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '2px' }}>
+            EXAMINATION &amp; PRACTICE RESULTS ARCHIVE
+          </div>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--sp-text-primary)', margin: 0 }}>
+            All Completed Tests (0)
+          </h2>
+          <p style={{ fontSize: '0.78125rem', color: 'var(--sp-text-muted)', margin: '2px 0 0' }}>
+            Every exam and practice session you take is recorded here with live scorecards and question breakdowns.
+          </p>
+        </div>
+
+        <div className="sp-card" style={{ textAlign: 'center', padding: '3.5rem 1.5rem', borderRadius: '16px' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>📊</div>
+          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--sp-text-primary)', margin: '0 0 6px' }}>
+            No test records found for {candidateUser?.fullName || candidateUser?.name || 'this account'}
+          </h3>
+          <p style={{ fontSize: '0.84375rem', color: 'var(--sp-text-muted)', maxWidth: '440px', margin: '0 auto 1.5rem' }}>
+            You haven't completed any institutional exams or AI practice tests yet. Start your first session to view full scorecards, proctoring integrity audits, and instant question explanations.
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+            <button
+              type="button"
+              className="sp-generate-btn"
+              onClick={() => onNavigateTab && onNavigateTab('practice')}
+              style={{ padding: '0.65rem 1.25rem', fontSize: '0.84375rem' }}
+            >
+              ✦ Start AI Practice Test
+            </button>
+            <button
+              type="button"
+              className="sp-btn-subtle"
+              onClick={() => onNavigateTab && onNavigateTab('tests')}
+              style={{ padding: '0.65rem 1.25rem', fontSize: '0.84375rem', border: '1px solid var(--sp-border)' }}
+            >
+              View Enrolled Tests
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -513,6 +452,28 @@ export default function StudentResultsView({ candidateUser, onNavigateTab }) {
               <span className="rv-hero-score-fraction">{activeTest.score}</span>
               <span className="rv-hero-score-total">/ {activeTest.totalMarks || (activeTest.totalQuestions * 5)} Marks</span>
             </div>
+
+            {activeTest.type === 'academic' && (
+              <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    padding: '3px 9px',
+                    borderRadius: '12px',
+                    backgroundColor: (activeTest.proctoring?.integrityScore ?? 100) >= 80 ? '#ECFDF5' : '#FEF3C7',
+                    color: (activeTest.proctoring?.integrityScore ?? 100) >= 80 ? '#059669' : '#D97706',
+                  }}
+                >
+                  🛡️ Proctoring: {activeTest.proctoring?.integrityStatus || 'Verified Integrity'}
+                </span>
+                {activeTest.proctoring?.totalIncidents > 0 && (
+                  <span style={{ fontSize: '0.72rem', color: 'var(--sp-text-muted)' }}>
+                    ({activeTest.proctoring.totalIncidents} events recorded for faculty audit)
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

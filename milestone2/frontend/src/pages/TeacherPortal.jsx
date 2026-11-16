@@ -8,6 +8,7 @@ import StepPublish from '../components/teacher/StepPublish';
 import TeacherTestsList from '../components/teacher/TeacherTestsList';
 import TeacherDashboardView from '../components/teacher/TeacherDashboardView';
 import TeacherStudentsView from '../components/teacher/TeacherStudentsView';
+import TeacherSubmissionsView from '../components/teacher/TeacherSubmissionsView';
 import {
   INITIAL_TEACHER_TESTS,
   saveOrUpdateTeacherTest,
@@ -297,6 +298,10 @@ export default function TeacherPortal({ initialView = 'create-test' }) {
 
           {currentTab === 'students' && (
             <TeacherStudentsView />
+          )}
+
+          {currentTab === 'submissions' && (
+            <TeacherSubmissionsView />
           )}
         </div>
       </div>

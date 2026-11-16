@@ -140,7 +140,11 @@ export default function StudentPortal({ initialView = 'practice' }) {
         {/* Body View Container */}
         <div className="student-content-container">
           {currentTab === 'practice' && (
-            <StudentPracticeView onShowToast={showToast} onNavigateTab={setCurrentTab} />
+            <StudentPracticeView
+              candidateUser={candidateUser}
+              onShowToast={showToast}
+              onNavigateTab={setCurrentTab}
+            />
           )}
 
           {currentTab === 'dashboard' && (

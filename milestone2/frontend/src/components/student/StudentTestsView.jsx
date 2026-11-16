@@ -4,12 +4,17 @@ import {
   isStudentAssignedToTest,
   saveStudentSubmission,
   getStudentSubmissions,
+  getActiveExamSession,
+  clearActiveExamSession,
+  isTestReassignedForStudent,
 } from '../../utils/mockApi';
 import InteractiveExamRunner from './InteractiveExamRunner';
+import PreExamVerificationModal from './PreExamVerificationModal';
 
 /**
  * Student Tests View ("My Tests")
  * Clean, well-proportioned view displaying examinations assigned by faculty.
+ * Supports multiple attempts whenever faculty re-assigns the exam (even with zero question edits).
  */
 export default function StudentTestsView({ candidateUser, onShowToast, onNavigateTab }) {
   const [allTests, setAllTests] = useState(() => getStoredTeacherTests());
@@ -23,6 +28,7 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
 
   // Modal states
   const [selectedSyllabusTest, setSelectedSyllabusTest] = useState(null);
+  const [verifyingExam, setVerifyingExam] = useState(null);
   const [activeExam, setActiveExam] = useState(null);
   const [examSubmitted, setExamSubmitted] = useState(false);
   const [examResult, setExamResult] = useState(null);
@@ -57,7 +63,7 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
     });
   }, [allTests, candidateUser, manuallyJoinedIds]);
 
-  // Submission lookup helper
+  // Submission lookup helper (returns newest submission for this test)
   const getTestSubmission = (testId, testCode) => {
     return submissions.find(
       (s) =>
@@ -66,7 +72,7 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
     );
   };
 
-  // Filtered view by tab
+  // Filtered view by tab (re-assigned tests reappear in 'assigned' and 'open' as fresh attempts)
   const displayedTests = useMemo(() => {
     if (filterTab === 'completed') {
       if (submissions.length > 0) {
@@ -92,14 +98,22 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
       return assignedTests.filter((t) => !!getTestSubmission(t.id, t.code));
     }
     if (filterTab === 'open') {
-      return assignedTests.filter((t) => !getTestSubmission(t.id, t.code));
+      return assignedTests.filter((t) => {
+        const sub = getTestSubmission(t.id, t.code);
+        return !sub || isTestReassignedForStudent(t, sub, candidateUser);
+      });
     }
     return assignedTests;
-  }, [assignedTests, allTests, filterTab, submissions]);
+  }, [assignedTests, allTests, filterTab, submissions, candidateUser]);
 
   // Counts
   const completedCount = submissions.length;
-  const openCount = Math.max(0, assignedTests.length - assignedTests.filter((t) => !!getTestSubmission(t.id, t.code)).length);
+  const openCount = useMemo(() => {
+    return assignedTests.filter((t) => {
+      const sub = getTestSubmission(t.id, t.code);
+      return !sub || isTestReassignedForStudent(t, sub, candidateUser);
+    }).length;
+  }, [assignedTests, submissions, candidateUser]);
 
   // Handle joining via exam code
   const handleJoinByCode = (e) => {
@@ -131,15 +145,16 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
     if (onShowToast) onShowToast(`Copied Exam Code: ${code}`);
   };
 
-  // Launch formal exam
-  const handleStartExam = (test) => {
-    setActiveExam(test);
+  // Launch formal exam (opens camera & face verification first; clears stale active sessions)
+  const handleStartExam = (test, isRetake = false) => {
+    clearActiveExamSession(test.id, candidateUser?.id || candidateUser?.email);
+    setVerifyingExam(test);
     setExamSubmitted(false);
     setExamResult(null);
   };
 
   // Submit formal exam
-  const handleSubmitExam = (finalAnswers = {}, timeSpentSec = 0) => {
+  const handleSubmitExam = (finalAnswers = {}, timeSpentSec = 0, proctoringReport = null) => {
     if (!activeExam) return;
 
     const questions = activeExam.questions || [];
@@ -256,6 +271,23 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
     const percentage = Math.round((score / totalMarks) * 100);
     const passed = percentage >= 40;
 
+    const defaultProctoring = {
+      integrityScore: 100,
+      integrityStatus: 'Clean (Verified Integrity)',
+      totalTabSwitches: 0,
+      totalGazeDeviations: 0,
+      totalFaceAbsences: 0,
+      totalIncidents: 0,
+      incidentTimeline: [],
+      verifiedAt: new Date().toISOString(),
+    };
+
+    // Count prior attempts to track sequential attempt numbers
+    const priorAttempts = submissions.filter(
+      (s) => s.testId === activeExam.id || (s.testCode && s.testCode.toUpperCase() === (activeExam.code || '').toUpperCase())
+    );
+    const attemptNumber = priorAttempts.length + 1;
+
     const submissionPayload = {
       id: `sub_${Date.now()}`,
       testId: activeExam.id,
@@ -283,6 +315,17 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
       questions: questions,
       review: reviewList,
       type: 'academic',
+      attempt: attemptNumber,
+      referencePhoto: activeExam.referencePhoto || (proctoringReport && proctoringReport.referencePhoto) || null,
+      proctoring: proctoringReport
+        ? {
+            ...proctoringReport,
+            referencePhoto: proctoringReport.referencePhoto || activeExam.referencePhoto || null,
+          }
+        : {
+            ...defaultProctoring,
+            referencePhoto: activeExam.referencePhoto || null,
+          },
     };
 
     saveStudentSubmission(submissionPayload);
@@ -297,7 +340,20 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
       totalQuestions: questions.length,
     });
     setExamSubmitted(true);
-    if (onShowToast) onShowToast('Exam submitted successfully! Results recorded.');
+
+    // Cleanly exit full-screen mode upon exam submission
+    if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement) {
+      try {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        }
+      } catch (e) {}
+    }
+    if (onShowToast) onShowToast(`Exam attempt #${attemptNumber} submitted successfully! Results recorded.`);
   };
 
   const getInitials = (name) => {
@@ -473,6 +529,7 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(330px, 1fr))', gap: '1.25rem' }}>
           {displayedTests.map((test) => {
             const submission = getTestSubmission(test.id, test.code);
+            const isReassigned = isTestReassignedForStudent(test, submission, candidateUser);
             const totalMarks =
               test.questions?.reduce((acc, q) => acc + (Number(q.marks) || 5), 0) || 100;
 
@@ -732,8 +789,32 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
                   <span style={{ color: 'var(--sp-emerald-text)', fontWeight: 700 }}>● Active Now</span>
                 </div>
 
-                {/* Completed status banner */}
-                {submission && (
+                {/* Status banner */}
+                {submission && isReassigned ? (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.45rem 0.75rem',
+                      borderRadius: '6px',
+                      backgroundColor: 'rgba(217, 119, 6, 0.12)',
+                      color: '#B45309',
+                      border: '1px solid rgba(217, 119, 6, 0.3)',
+                      fontSize: '0.71875rem',
+                      fontWeight: 700,
+                      marginBottom: '0.85rem',
+                    }}
+                  >
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <span>🔄</span>
+                      <span>Re-assigned by Faculty &bull; Fresh Attempt Ready!</span>
+                    </span>
+                    <span style={{ fontSize: '0.6875rem', padding: '1px 6px', borderRadius: '4px', backgroundColor: '#FEF3C7', color: '#92400E' }}>
+                      Attempt #{(submission.attempt || 1) + 1}
+                    </span>
+                  </div>
+                ) : submission ? (
                   <div
                     style={{
                       display: 'flex',
@@ -748,44 +829,140 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
                       marginBottom: '0.85rem',
                     }}
                   >
-                    <span>✓ Completed &bull; Score: {submission.score}/{submission.totalMarks} ({submission.percentage}%)</span>
+                    <span>✓ Completed &bull; Score: {submission.score}/{submission.totalMarks} ({submission.percentage}%){submission.attempt > 1 ? ` • Att #${submission.attempt}` : ''}</span>
                     <span style={{ fontSize: '0.6875rem' }}>Recorded</span>
                   </div>
-                )}
+                ) : null}
 
                 {/* Actions */}
-                <div style={{ marginTop: 'auto', display: 'flex', gap: '8px' }}>
+                <div style={{ marginTop: 'auto', display: 'flex', gap: '6px' }}>
                   <button
                     type="button"
                     className="sp-btn-subtle"
-                    style={{ flex: 1, padding: '0.45rem 0.65rem', fontSize: '0.78125rem' }}
+                    style={{ padding: '0.45rem 0.65rem', fontSize: '0.78125rem', flexShrink: 0 }}
                     onClick={() => setSelectedSyllabusTest(test)}
                   >
                     Syllabus
                   </button>
 
-                  {submission ? (
-                    <button
-                      type="button"
-                      className="sp-generate-btn"
-                      style={{ flex: 1.4, padding: '0.45rem 0.75rem', fontSize: '0.78125rem', backgroundColor: '#059669' }}
-                      onClick={() => {
-                        setExamResult(submission);
-                        setExamSubmitted(true);
-                      }}
-                    >
-                      View Scorecard &rarr;
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="sp-generate-btn"
-                      style={{ flex: 1.4, padding: '0.45rem 0.75rem', fontSize: '0.78125rem' }}
-                      onClick={() => handleStartExam(test)}
-                    >
-                      Start Examination &rarr;
-                    </button>
-                  )}
+                  {submission && isReassigned ? (
+                    <div style={{ display: 'flex', gap: '6px', flex: 1.6 }}>
+                      <button
+                        type="button"
+                        className="sp-btn-subtle"
+                        style={{ padding: '0.45rem 0.55rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+                        onClick={() => {
+                          setExamResult(submission);
+                          setExamSubmitted(true);
+
+    // Cleanly exit full-screen mode upon exam submission
+    if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement) {
+      try {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        }
+      } catch (e) {}
+    }
+                        }}
+                        title="View previous attempt scorecard"
+                      >
+                        Prev Score
+                      </button>
+                      <button
+                        type="button"
+                        className="sp-generate-btn"
+                        style={{
+                          flex: 1,
+                          padding: '0.45rem 0.7rem',
+                          fontSize: '0.75rem',
+                          backgroundColor: '#D97706',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '4px',
+                          fontWeight: 700,
+                        }}
+                        onClick={() => handleStartExam(test, true)}
+                        title="Faculty re-assigned this test. Click to take it again."
+                      >
+                        <span>⚡ Start Re-test &rarr;</span>
+                      </button>
+                    </div>
+                  ) : submission ? (
+                    <div style={{ display: 'flex', gap: '6px', flex: 1.6 }}>
+                      <button
+                        type="button"
+                        className="sp-btn-subtle"
+                        style={{
+                          flex: 1,
+                          padding: '0.45rem 0.5rem',
+                          fontSize: '0.75rem',
+                          color: '#059669',
+                          borderColor: '#A7F3D0',
+                          backgroundColor: '#ECFDF5',
+                          fontWeight: 700,
+                        }}
+                        onClick={() => {
+                          setExamResult(submission);
+                          setExamSubmitted(true);
+
+    // Cleanly exit full-screen mode upon exam submission
+    if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement) {
+      try {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        }
+      } catch (e) {}
+    }
+                        }}
+                      >
+                        Scorecard &rarr;
+                      </button>
+                      <button
+                        type="button"
+                        className="sp-generate-btn"
+                        style={{
+                          flex: 1,
+                          padding: '0.45rem 0.55rem',
+                          fontSize: '0.75rem',
+                          backgroundColor: '#2563EB',
+                        }}
+                        onClick={() => {
+                          if (window.confirm(`Take "${test.title}" again? A fresh attempt will be recorded while preserving your previous results.`)) {
+                            handleStartExam(test, true);
+                          }
+                        }}
+                        title="Retake this examination for extra practice"
+                      >
+                        ⚡ Retake &rarr;
+                      </button>
+                    </div>
+                  ) : (() => {
+                    const activeSession = getActiveExamSession(test.id, candidateUser?.id || candidateUser?.email);
+                    return (
+                      <button
+                        type="button"
+                        className="sp-generate-btn"
+                        style={{
+                          flex: 1.4,
+                          padding: '0.45rem 0.75rem',
+                          fontSize: '0.78125rem',
+                          backgroundColor: activeSession ? '#D97706' : undefined,
+                        }}
+                        onClick={() => handleStartExam(test)}
+                      >
+                        {activeSession ? '⚡ Resume Exam →' : 'Start Examination →'}
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
             );
@@ -894,19 +1071,43 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
         </div>
       )}
 
+      {/* Pre-Exam Face & Camera Verification Modal */}
+      {verifyingExam && (
+        <PreExamVerificationModal
+          exam={verifyingExam}
+          candidateUser={candidateUser}
+          onProceed={(verificationData = {}) => {
+            const chosen = verifyingExam;
+            setVerifyingExam(null);
+            setActiveExam({
+              ...chosen,
+              referencePhoto: verificationData.referencePhoto || null,
+              verifiedAt: verificationData.verifiedAt || new Date().toISOString(),
+            });
+          }}
+          onCancel={() => setVerifyingExam(null)}
+        />
+      )}
+
       {/* Formal Proctored Exam Runner (Pixel-Matched Fullscreen Runner) */}
       {activeExam && !examSubmitted && (
         <InteractiveExamRunner
+          exam={activeExam}
           examTitle={activeExam.title}
           durationMinutes={activeExam.duration || 45}
           questions={activeExam.questions || []}
           isProctored={true}
+          maxTabSwitches={activeExam.maxTabSwitches || 3}
+          candidateUser={candidateUser}
+          referencePhoto={activeExam.referencePhoto}
           onClose={() => {
-            if (window.confirm('Quit active exam session? Unsubmitted answers will be discarded.')) {
+            if (window.confirm('Quit active exam session? Your in-progress responses are saved and can be resumed.')) {
               setActiveExam(null);
             }
           }}
-          onSubmit={(finalAnswers, timeSpentSec) => handleSubmitExam(finalAnswers, timeSpentSec)}
+          onSubmit={(finalAnswers, timeSpentSec, proctoringReport) =>
+            handleSubmitExam(finalAnswers, timeSpentSec, proctoringReport)
+          }
         />
       )}
 

@@ -12,6 +12,7 @@ import InteractiveExamRunner from './InteractiveExamRunner';
  */
 export default function PracticeTestRunnerModal({
   practiceConfig,
+  candidateUser,
   onClose,
   onSubmitResult,
 }) {
@@ -762,9 +763,23 @@ export default function PracticeTestRunnerModal({
       totalQuestions: questions.length,
       timeTakenDisplay: isTimed ? `${Math.max(1, Math.round(timeSpentSec / 60))} mins` : 'Self-paced',
       timestampDisplay: 'Just now',
+      studentId: candidateUser?.id || candidateUser?.email || '',
+      studentEmail: candidateUser?.email || '',
+      studentName: candidateUser?.fullName || candidateUser?.name || '',
       questions: questions, // Preserves exact questions for Retake / Retest sessions
       review: reviewList,
     };
+
+    // Safely exit full-screen mode upon practice test completion
+    if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement) {
+      try {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+      } catch (e) {}
+    }
 
     onSubmitResult(resultPayload);
   };
@@ -777,6 +792,7 @@ export default function PracticeTestRunnerModal({
       onClose={onClose}
       onSubmit={handleSubmit}
       isProctored={false}
+      candidateUser={candidateUser}
     />
   );
 }

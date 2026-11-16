@@ -5,7 +5,7 @@ AI Question Synthesis & Evaluation Router (Milestone 2 Backend)
 from typing import Optional
 from fastapi import APIRouter
 from pydantic import BaseModel
-from services.gemini_service import generate_questions, evaluate_written_answer
+from services.gemini_service import generate_questions, evaluate_written_answer, extract_text_from_image
 
 router = APIRouter(prefix="/api/ai", tags=["AI Generation & Evaluation"])
 
@@ -24,6 +24,12 @@ class EvaluationRequest(BaseModel):
     studentAnswer: str
     rubric: Optional[str] = ""
     maxMarks: Optional[float] = 10.0
+
+
+class OCRRequest(BaseModel):
+    image: str
+    mimeType: Optional[str] = "image/jpeg"
+    questionTitle: Optional[str] = ""
 
 
 @router.post("/generate-questions")
@@ -55,4 +61,14 @@ def api_evaluate_answer(req: EvaluationRequest):
         "success": True,
         "evaluation": result,
     }
+
+
+@router.post("/ocr")
+def api_extract_text(req: OCRRequest):
+    result = extract_text_from_image(
+        image_base64_or_data_url=req.image,
+        mime_type=req.mimeType or "image/jpeg",
+        question_context=req.questionTitle or "",
+    )
+    return result
 
