@@ -7,6 +7,7 @@ import {
   getActiveExamSession,
   clearActiveExamSession,
   isTestReassignedForStudent,
+  getActiveSession,
 } from '../../utils/mockApi';
 import InteractiveExamRunner from './InteractiveExamRunner';
 import PreExamVerificationModal from './PreExamVerificationModal';
@@ -52,11 +53,24 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
     };
   }, [candidateUser]);
 
-  // Assigned teacher tests (shows ONLY tests published by teacher and assigned to this student)
+  // Assigned teacher tests (shows ONLY tests published by actual active faculty and assigned to this student)
   const assignedTests = useMemo(() => {
     return allTests.filter((t) => {
       // Must be published! Drafts and archived are strictly excluded.
       if (t.status !== 'published') return false;
+
+      // Filter out legacy dummy mock tests from old faculty
+      const inst = String(t.instructor || '').toLowerCase();
+      if (
+        inst === 'dr. test teacher' ||
+        inst === 'authorized instructor' ||
+        t.id === 'test_001' ||
+        t.id === 'test_002' ||
+        t.id === 'test_003'
+      ) {
+        return false;
+      }
+
       const isAssigned = isStudentAssignedToTest(t, candidateUser);
       const isManual = manuallyJoinedIds.includes(t.id);
       return isAssigned || isManual;
@@ -67,8 +81,9 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
   const getTestSubmission = (testId, testCode) => {
     return submissions.find(
       (s) =>
-        (testId && s.testId === testId) ||
-        (testCode && s.testCode && s.testCode.toUpperCase() === String(testCode).toUpperCase())
+        (testId && String(s.testId) === String(testId)) ||
+        (testCode && s.testCode && String(s.testCode).toUpperCase() === String(testCode).toUpperCase()) ||
+        (testCode && s.code && String(s.code).toUpperCase() === String(testCode).toUpperCase())
     );
   };
 
@@ -77,12 +92,12 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
     if (filterTab === 'completed') {
       if (submissions.length > 0) {
         return submissions.map((s) => {
-          const matchedTest = allTests.find((t) => t.id === s.testId || (s.testCode && t.code === s.testCode)) || {};
+          const matchedTest = allTests.find((t) => String(t.id) === String(s.testId) || (s.testCode && String(t.code || '').toUpperCase() === String(s.testCode).toUpperCase())) || {};
           return {
             ...matchedTest,
             id: s.testId || s.id,
             submissionId: s.id,
-            title: s.testTitle || matchedTest.title || 'Examination',
+            title: s.testTitle || s.title || matchedTest.title || 'Examination',
             subject: s.subject || matchedTest.subject || 'Computer Science',
             topic: s.topic || matchedTest.topic || '',
             instructor: s.instructor || matchedTest.instructor || 'Course Faculty',
@@ -288,6 +303,21 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
     );
     const attemptNumber = priorAttempts.length + 1;
 
+    const activeStudentSession = getActiveSession('student') || getActiveSession();
+    const effectiveStudentName =
+      candidateUser?.fullName ||
+      candidateUser?.name ||
+      activeStudentSession?.fullName ||
+      activeStudentSession?.name ||
+      'Anupam Kumar';
+    const effectiveStudentEmail = candidateUser?.email || activeStudentSession?.email || 'anupam.kumar@demo.edu';
+    const effectiveStudentId = candidateUser?.id || activeStudentSession?.id || `usr_${Date.now()}`;
+    const effectiveStudentRoll = candidateUser?.identifier || activeStudentSession?.identifier || '';
+
+    const testInstructor = activeExam.instructor || 'Course Faculty';
+    const testInstructorEmail = activeExam.instructorEmail || '';
+    const testAuthorId = activeExam.authorId || activeExam.instructorId || '';
+
     const submissionPayload = {
       id: `sub_${Date.now()}`,
       testId: activeExam.id,
@@ -296,11 +326,14 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
       subject: activeExam.subject || 'Computer Science',
       topic: activeExam.topic || activeExam.title,
       difficulty: activeExam.difficulty || 'Medium',
-      instructor: activeExam.instructor || 'Course Faculty',
+      instructor: testInstructor,
       instructorRole: activeExam.instructorRole || 'Course Faculty',
-      studentId: candidateUser?.id || 'usr_002',
-      studentName: candidateUser?.fullName || candidateUser?.name || 'Test Student',
-      studentEmail: candidateUser?.email || 'teststudent@gmail.com',
+      instructorEmail: testInstructorEmail,
+      authorId: testAuthorId,
+      studentId: effectiveStudentId,
+      studentName: effectiveStudentName,
+      studentEmail: effectiveStudentEmail,
+      studentRoll: effectiveStudentRoll,
       score: score,
       totalMarks: totalMarks,
       percentage: percentage,
@@ -331,8 +364,9 @@ export default function StudentTestsView({ candidateUser, onShowToast, onNavigat
     saveStudentSubmission(submissionPayload);
     setSubmissions((prev) => [submissionPayload, ...prev]);
 
-    // Dispatch global event for Results tab sync
+    // Dispatch global events for Results tab sync
     window.dispatchEvent(new Event('examai_student_test_completed'));
+    window.dispatchEvent(new Event('examai_submissions_updated'));
 
     setExamResult({
       ...submissionPayload,

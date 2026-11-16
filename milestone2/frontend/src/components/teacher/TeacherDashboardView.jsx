@@ -1,14 +1,43 @@
-import React from 'react';
-import { getStoredTeacherTests, getStoredUsers } from '../../utils/mockApi';
+import React, { useMemo, useState, useEffect } from 'react';
+import { getTestsForTeacher, getSubmissionsForTeacher, getStoredUsers } from '../../utils/mockApi';
 
 /**
  * Teacher Dashboard View
  * High-level telemetry, active exam monitoring, and quick action cards
+ * Strictly scoped to the currently logged-in educator
  */
-export default function TeacherDashboardView({ onNavigateToCreate, onNavigateToTests }) {
-  const tests = getStoredTeacherTests();
-  const users = getStoredUsers().filter((u) => u.role === 'student' && u.active);
+export default function TeacherDashboardView({ currentTeacher, onNavigateToCreate, onNavigateToTests }) {
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  useEffect(() => {
+    const handleSync = () => setRefreshTrigger((prev) => prev + 1);
+    window.addEventListener('examai_tests_updated', handleSync);
+    window.addEventListener('examai_submissions_updated', handleSync);
+    window.addEventListener('examai_student_test_completed', handleSync);
+    window.addEventListener('storage', handleSync);
+    return () => {
+      window.removeEventListener('examai_tests_updated', handleSync);
+      window.removeEventListener('examai_submissions_updated', handleSync);
+      window.removeEventListener('examai_student_test_completed', handleSync);
+      window.removeEventListener('storage', handleSync);
+    };
+  }, []);
+
+  const tests = useMemo(() => getTestsForTeacher(currentTeacher), [currentTeacher, refreshTrigger]);
+  const submissions = useMemo(() => getSubmissionsForTeacher(currentTeacher), [currentTeacher, refreshTrigger]);
+  const users = getStoredUsers().filter(
+    (u) =>
+      u.role === 'student' &&
+      u.active &&
+      u.id !== 'usr_001' &&
+      u.id !== 'usr_002' &&
+      u.email !== 'dummystudent@gmail.com' &&
+      u.email !== 'teststudent@gmail.com' &&
+      u.name !== 'Dummy Student' &&
+      u.name !== 'Test Student'
+  );
+
+  const teacherDisplayName = currentTeacher?.fullName || currentTeacher?.name || 'Faculty Member';
   const publishedCount = tests.filter((t) => t.status === 'published').length;
   const draftCount = tests.filter((t) => t.status === 'draft').length;
 
@@ -42,7 +71,7 @@ export default function TeacherDashboardView({ onNavigateToCreate, onNavigateToT
             Educator Studio Active
           </span>
           <h2 style={{ margin: '0.35rem 0 0.25rem', fontSize: '1.5rem', color: 'var(--tp-text-primary)' }}>
-            Welcome back, test teacher
+            Welcome back, {teacherDisplayName}
           </h2>
           <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--tp-text-muted)' }}>
             Author new proctored exam blueprints, review AI-graded submissions, and track student proctoring integrity.
@@ -133,33 +162,41 @@ export default function TeacherDashboardView({ onNavigateToCreate, onNavigateToT
               </tr>
             </thead>
             <tbody>
-              {tests.slice(0, 3).map((t) => (
-                <tr key={t.id} style={{ borderBottom: '1px solid var(--tp-border-light)' }}>
-                  <td style={{ padding: '0.85rem 1.5rem', fontWeight: 600, color: 'var(--tp-text-primary)' }}>
-                    {t.title}
-                  </td>
-                  <td style={{ padding: '0.85rem 1.5rem', color: 'var(--tp-text-secondary)' }}>
-                    {t.subject} &bull; {t.topic}
-                  </td>
-                  <td style={{ padding: '0.85rem 1.5rem', color: 'var(--tp-text-muted)' }}>
-                    ⏱ {t.duration} mins
-                  </td>
-                  <td style={{ padding: '0.85rem 1.5rem' }}>
-                    <span
-                      style={{
-                        padding: '2px 8px',
-                        borderRadius: '12px',
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        backgroundColor: t.status === 'published' ? 'rgba(22, 163, 74, 0.12)' : 'rgba(234, 179, 8, 0.12)',
-                        color: t.status === 'published' ? '#16A34A' : '#CA8A04',
-                      }}
-                    >
-                      {t.status?.toUpperCase()}
-                    </span>
+              {tests.length === 0 ? (
+                <tr>
+                  <td colSpan={4} style={{ padding: '2.5rem 1.5rem', textAlign: 'center', color: 'var(--tp-text-muted)' }}>
+                    No assessments authored yet. Click "Launch Test Creator" above to create your first examination.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                tests.slice(0, 3).map((t) => (
+                  <tr key={t.id} style={{ borderBottom: '1px solid var(--tp-border-light)' }}>
+                    <td style={{ padding: '0.85rem 1.5rem', fontWeight: 600, color: 'var(--tp-text-primary)' }}>
+                      {t.title}
+                    </td>
+                    <td style={{ padding: '0.85rem 1.5rem', color: 'var(--tp-text-secondary)' }}>
+                      {t.subject} &bull; {t.topic}
+                    </td>
+                    <td style={{ padding: '0.85rem 1.5rem', color: 'var(--tp-text-muted)' }}>
+                      ⏱ {t.duration} mins
+                    </td>
+                    <td style={{ padding: '0.85rem 1.5rem' }}>
+                      <span
+                        style={{
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          backgroundColor: t.status === 'published' ? 'rgba(22, 163, 74, 0.12)' : 'rgba(234, 179, 8, 0.12)',
+                          color: t.status === 'published' ? '#16A34A' : '#CA8A04',
+                        }}
+                      >
+                        {t.status?.toUpperCase()}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

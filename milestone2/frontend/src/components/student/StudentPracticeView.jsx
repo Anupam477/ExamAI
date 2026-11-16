@@ -5,6 +5,7 @@ import {
   getStudentPracticeHistory,
   saveStudentPracticeHistory,
   deleteStudentPracticeHistoryItem,
+  saveStudentSubmission,
 } from '../../utils/mockApi';
 
 // Quick topic suggestion pills matching screenshot
@@ -168,7 +169,32 @@ export default function StudentPracticeView({ candidateUser, onShowToast, onNavi
     const updated = [newEntry, ...historyList];
     saveHistory(updated);
 
+    try {
+      saveStudentSubmission({
+        ...newEntry,
+        id: newEntry.id || `practice_${Date.now()}`,
+        testId: newEntry.id || `practice_${Date.now()}`,
+        type: 'practice',
+        title: newEntry.title || `${newEntry.topic || 'Practice'} Test`,
+        testTitle: newEntry.title || `${newEntry.topic || 'Practice'} Test`,
+        subject: newEntry.subject || 'General Studies',
+        topic: newEntry.topic || 'Practice',
+        score: newEntry.score !== undefined ? newEntry.score : (newEntry.correctCount ? newEntry.correctCount * 5 : 0),
+        totalMarks: newEntry.totalMarks || (newEntry.totalQuestions ? newEntry.totalQuestions * 5 : 25),
+        percentage: newEntry.percentage !== undefined ? Number(newEntry.percentage) : 0,
+        correctCount: newEntry.correctCount || 0,
+        wrongCount: Math.max(0, (newEntry.totalQuestions || 5) - (newEntry.correctCount || 0)),
+        totalQuestions: newEntry.totalQuestions || 5,
+        submittedAt: newEntry.submittedAt || new Date().toISOString(),
+        review: newEntry.review || [],
+        proctoring: newEntry.proctoring || {},
+      });
+    } catch (e) {
+      console.warn('Non-blocking practice submission register:', e);
+    }
+
     window.dispatchEvent(new Event('examai_student_test_completed'));
+    window.dispatchEvent(new Event('examai_submissions_updated'));
 
     setActiveRunnerConfig(null);
     setViewingResult(newEntry);

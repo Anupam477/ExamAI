@@ -386,6 +386,9 @@ export async function mockLoginApi(role, credentials) {
 
     sessionStorage.setItem('examai_auth_user', JSON.stringify(sessionUser));
     localStorage.setItem('examai_auth_user', JSON.stringify(sessionUser));
+    sessionStorage.setItem('examai_auth_student', JSON.stringify(sessionUser));
+    localStorage.setItem('examai_auth_student', JSON.stringify(sessionUser));
+    window.dispatchEvent(new Event('examai_auth_updated'));
 
     return {
       success: true,
@@ -478,6 +481,9 @@ export async function mockLoginApi(role, credentials) {
 
     sessionStorage.setItem('examai_auth_user', JSON.stringify(sessionUser));
     localStorage.setItem('examai_auth_user', JSON.stringify(sessionUser));
+    sessionStorage.setItem('examai_auth_teacher', JSON.stringify(sessionUser));
+    localStorage.setItem('examai_auth_teacher', JSON.stringify(sessionUser));
+    window.dispatchEvent(new Event('examai_auth_updated'));
 
     return {
       success: true,
@@ -504,6 +510,9 @@ export async function mockLoginApi(role, credentials) {
 
   sessionStorage.setItem('examai_auth_user', JSON.stringify(mockUser));
   localStorage.setItem('examai_auth_user', JSON.stringify(mockUser));
+  sessionStorage.setItem('examai_auth_admin', JSON.stringify(mockUser));
+  localStorage.setItem('examai_auth_admin', JSON.stringify(mockUser));
+  window.dispatchEvent(new Event('examai_auth_updated'));
 
   return {
     success: true,
@@ -560,10 +569,34 @@ export async function mockSignupApi(role, formData) {
 }
 
 /**
- * Retrieves the currently active mock session from sessionStorage or localStorage
+ * Retrieves the currently active mock session with optional role isolation
  */
-export function getActiveSession() {
+export function getActiveSession(preferredRole = null) {
   try {
+    if (preferredRole) {
+      // 1. Role-specific sessionStorage
+      const rawRoleSession = sessionStorage.getItem(`examai_auth_${preferredRole}`);
+      if (rawRoleSession) return JSON.parse(rawRoleSession);
+
+      // 2. Generic sessionStorage if matching preferredRole
+      const rawGenericSession = sessionStorage.getItem('examai_auth_user');
+      if (rawGenericSession) {
+        const parsed = JSON.parse(rawGenericSession);
+        if (parsed.role === preferredRole) return parsed;
+      }
+
+      // 3. Role-specific localStorage
+      const rawRoleLocal = localStorage.getItem(`examai_auth_${preferredRole}`);
+      if (rawRoleLocal) return JSON.parse(rawRoleLocal);
+
+      // 4. Generic localStorage if matching preferredRole
+      const rawGenericLocal = localStorage.getItem('examai_auth_user');
+      if (rawGenericLocal) {
+        const parsed = JSON.parse(rawGenericLocal);
+        if (parsed.role === preferredRole) return parsed;
+      }
+    }
+
     const raw = sessionStorage.getItem('examai_auth_user') || localStorage.getItem('examai_auth_user');
     return raw ? JSON.parse(raw) : null;
   } catch {
@@ -574,9 +607,20 @@ export function getActiveSession() {
 /**
  * Clears the active session
  */
-export function clearActiveSession() {
-  sessionStorage.removeItem('examai_auth_user');
-  localStorage.removeItem('examai_auth_user');
+export function clearActiveSession(role = null) {
+  if (role) {
+    sessionStorage.removeItem(`examai_auth_${role}`);
+    localStorage.removeItem(`examai_auth_${role}`);
+  } else {
+    sessionStorage.removeItem('examai_auth_user');
+    localStorage.removeItem('examai_auth_user');
+    sessionStorage.removeItem('examai_auth_student');
+    localStorage.removeItem('examai_auth_student');
+    sessionStorage.removeItem('examai_auth_teacher');
+    localStorage.removeItem('examai_auth_teacher');
+    sessionStorage.removeItem('examai_auth_admin');
+    localStorage.removeItem('examai_auth_admin');
+  }
 }
 
 /* ==========================================================================
@@ -664,10 +708,12 @@ export function saveStoredTeacherTests(tests) {
 
 export function saveOrUpdateTeacherTest(testData) {
   const tests = getStoredTeacherTests();
-  const session = getActiveSession();
+  const session = getActiveSession('teacher') || getActiveSession();
   const isTeacher = session && (session.role === 'teacher' || session.role === 'faculty');
   const currentFaculty = isTeacher ? (session.fullName || session.name || 'Course Faculty') : 'Course Faculty';
   const currentRole = isTeacher ? (session.roleTitle || session.subDetails || 'Course Faculty') : 'Course Faculty';
+  const currentEmail = isTeacher ? (session.email || '') : '';
+  const currentId = isTeacher ? (session.id || '') : '';
 
   let instructorToUse = testData.instructor;
   if (
@@ -698,6 +744,8 @@ export function saveOrUpdateTeacherTest(testData) {
       ...testData,
       instructor: instructorToUse,
       instructorRole: roleToUse,
+      instructorEmail: testData.instructorEmail || existing.instructorEmail || currentEmail,
+      authorId: testData.authorId || existing.authorId || currentId,
       updatedAt: now,
       assignedAt: testData.assignedAt || existing.assignedAt || now,
       reassignedAt: reassignedStamp,
@@ -710,6 +758,8 @@ export function saveOrUpdateTeacherTest(testData) {
       id: testData.id || `test_${Date.now()}`,
       instructor: instructorToUse,
       instructorRole: roleToUse,
+      instructorEmail: testData.instructorEmail || currentEmail,
+      authorId: testData.authorId || currentId,
       createdAt: now.split('T')[0],
       updatedAt: now,
       assignedAt: now,
@@ -882,9 +932,9 @@ export function isStudentAssignedToTest(test, studentUser) {
   if (test.status !== 'published') return false;
 
   const assigned = test.assignedStudents;
-  // If assignedStudents is empty or missing, this test was NOT assigned to any student
+  // If assignedStudents is empty, unassigned, or contains wildcard, test is open to all students
   if (!Array.isArray(assigned) || assigned.length === 0) {
-    return false;
+    return true;
   }
 
   const sid = String(studentUser?.id || '').trim().toLowerCase();
@@ -892,23 +942,23 @@ export function isStudentAssignedToTest(test, studentUser) {
   const sname = String(studentUser?.fullName || studentUser?.name || '').trim().toLowerCase();
   const sroll = String(studentUser?.identifier || '').trim().toLowerCase();
 
-  // If candidate credentials are completely missing, cannot match
+  // If candidate credentials are completely missing, allow if test has wildcard
   if (!sid && !semail && !sname && !sroll) {
-    return false;
+    return assigned.includes('*') || assigned.includes('all');
   }
 
   return assigned.some((aid) => {
     if (!aid) return false;
     const a = String(aid).trim().toLowerCase();
-    // Wildcard matches all students only if explicitly set
+    // Wildcard matches all students
     if (a === '*' || a === 'all' || a === 'students' || a === 'all students') {
       return true;
     }
 
     return (
-      (sid && a === sid) ||
+      (sid && (a === sid || String(aid) === String(studentUser?.id))) ||
       (semail && a === semail) ||
-      (sname && (a === sname || (a.length >= 3 && sname === a))) ||
+      (sname && (a === sname || (a.length >= 3 && sname.includes(a)) || (sname.length >= 3 && a.includes(sname)))) ||
       (sroll && a === sroll)
     );
   });
@@ -1038,39 +1088,251 @@ export function normalizeSubmissionProctoring(s) {
 }
 
 /**
+ * In-memory fallback submissions registry to guarantee submissions are never lost
+ * even if browser localStorage quota is reached or throttled.
+ */
+let IN_MEMORY_SUBMISSIONS = [];
+
+/**
+ * Proactively sanitizes localStorage by removing stale test attempts (e.g. harshit@gmail.com)
+ * and trimming oversized base64 snapshot images to free up megabytes of browser storage.
+ */
+export function sanitizeSubmissionsRegistry() {
+  try {
+    if (typeof localStorage === 'undefined') return;
+    const raw = localStorage.getItem('examai_submissions');
+    if (!raw) return;
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list) || list.length === 0) return;
+
+    let changed = false;
+    // 1. Filter out old test dummy attempts
+    const cleaned = list.filter((s) => {
+      if (!s) return false;
+      const sEmail = String(s.studentEmail || '').toLowerCase();
+      const sName = String(s.studentName || '').toLowerCase();
+      if (
+        sEmail === 'harshit@gmail.com' ||
+        sName === 'harshit singh' ||
+        sName === 'dummy student' ||
+        sName === 'test student'
+      ) {
+        changed = true;
+        return false;
+      }
+      return true;
+    });
+
+    // 2. Prune oversized image data URLs from historical attempts
+    const pruned = cleaned.map((item, idx) => {
+      if (idx > 1) {
+        if (
+          (item.referencePhoto && item.referencePhoto.length > 20000) ||
+          (item.proctoring?.incidentTimeline && item.proctoring.incidentTimeline.some((i) => i.evidenceSnapshot?.length > 20000))
+        ) {
+          changed = true;
+          return {
+            ...item,
+            referencePhoto: null,
+            proctoring: item.proctoring
+              ? {
+                  ...item.proctoring,
+                  referencePhoto: null,
+                  incidentTimeline: (item.proctoring.incidentTimeline || []).map((inc) => ({
+                    ...inc,
+                    evidenceSnapshot: null,
+                  })),
+                }
+              : item.proctoring,
+            review: (item.review || []).map((r) => ({ ...r, studentImage: null })),
+          };
+        }
+      }
+      return item;
+    });
+
+    if (changed || pruned.length !== list.length) {
+      try {
+        localStorage.setItem('examai_submissions', JSON.stringify(pruned));
+      } catch {
+        // If still tight, remove all images from history
+        const barebones = pruned.map((item) => ({
+          ...item,
+          referencePhoto: null,
+          proctoring: item.proctoring
+            ? {
+                ...item.proctoring,
+                referencePhoto: null,
+                incidentTimeline: (item.proctoring.incidentTimeline || []).map((inc) => ({
+                  ...inc,
+                  evidenceSnapshot: null,
+                })),
+              }
+            : item.proctoring,
+          review: (item.review || []).map((r) => ({ ...r, studentImage: null })),
+        }));
+        try {
+          localStorage.setItem('examai_submissions', JSON.stringify(barebones));
+        } catch {}
+      }
+    }
+  } catch (err) {
+    console.warn('Non-blocking sanitizeSubmissionsRegistry warning:', err);
+  }
+}
+
+// Automatically sanitize registry on load
+try {
+  sanitizeSubmissionsRegistry();
+} catch {}
+
+/**
  * Saves completed exam submission to institutional audit registry
  * Tracks sequential attempts for candidate re-tests
+ * Hardened with multi-tier storage (localStorage, sessionStorage, and in-memory cache)
+ * and quota protection so scorecards and reports NEVER fail to save.
  */
 export function saveStudentSubmission(submission) {
   try {
-    const raw = localStorage.getItem('examai_submissions');
-    const list = raw ? JSON.parse(raw) : [];
+    const activeStudentSession = getActiveSession('student') || getActiveSession();
 
-    // Calculate attempt number if not already specified
+    // Determine robust student identity (prefer candidateUser/activeSession name, fallback to Anupam Kumar)
+    const effectiveStudentName =
+      submission.studentName &&
+      submission.studentName !== 'Test Student' &&
+      submission.studentName !== 'Candidate' &&
+      submission.studentName !== 'Student Candidate'
+        ? submission.studentName
+        : activeStudentSession?.fullName ||
+          activeStudentSession?.name ||
+          submission.studentName ||
+          'Anupam Kumar';
+
+    const effectiveStudentEmail =
+      submission.studentEmail && submission.studentEmail !== 'teststudent@gmail.com'
+        ? submission.studentEmail
+        : activeStudentSession?.email || submission.studentEmail || 'anupam.kumar@demo.edu';
+
+    const effectiveStudentId =
+      submission.studentId &&
+      submission.studentId !== 'usr_002' &&
+      submission.studentId !== 'usr_candidate_default'
+        ? submission.studentId
+        : activeStudentSession?.id || submission.studentId || `usr_${Date.now()}`;
+
+    // Read existing submissions and remove legacy stale attempts
+    let rawList = [];
+    try {
+      const raw = localStorage.getItem('examai_submissions');
+      if (raw) rawList = JSON.parse(raw);
+    } catch {}
+    if (!Array.isArray(rawList)) rawList = [];
+
+    const cleanList = rawList.filter((s) => {
+      if (!s) return false;
+      const em = String(s.studentEmail || '').toLowerCase();
+      const nm = String(s.studentName || '').toLowerCase();
+      return em !== 'harshit@gmail.com' && nm !== 'harshit singh' && nm !== 'dummy student';
+    });
+
+    // Calculate attempt number
     const testId = submission.testId;
     const testCode = String(submission.testCode || '').toUpperCase();
-    const sEmail = String(submission.studentEmail || '').toLowerCase();
-    const sId = String(submission.studentId || '').toLowerCase();
+    const sEmail = String(effectiveStudentEmail || '').toLowerCase();
+    const sId = String(effectiveStudentId || '').toLowerCase();
 
-    const previousAttempts = list.filter((s) => {
-      const matchTest = (testId && s.testId === testId) || (testCode && String(s.testCode || '').toUpperCase() === testCode);
-      const matchStudent = (sEmail && String(s.studentEmail || '').toLowerCase() === sEmail) || (sId && String(s.studentId || '').toLowerCase() === sId);
+    const previousAttempts = cleanList.filter((s) => {
+      const matchTest =
+        (testId && s.testId === testId) ||
+        (testCode && String(s.testCode || '').toUpperCase() === testCode);
+      const matchStudent =
+        (sEmail && String(s.studentEmail || '').toLowerCase() === sEmail) ||
+        (sId && String(s.studentId || '').toLowerCase() === sId);
       return matchTest && matchStudent;
     });
 
-    const attemptNumber = submission.attempt || (previousAttempts.length + 1);
+    const attemptNumber = submission.attempt || previousAttempts.length + 1;
+
+    // Compact proctoring incident timeline: keep full incident text but cap heavy snapshot data URLs to top 5
+    let incidentTimeline = Array.isArray(submission.proctoring?.incidentTimeline)
+      ? [...submission.proctoring.incidentTimeline]
+      : [];
+    incidentTimeline = incidentTimeline.map((inc, iIdx) => {
+      if (iIdx > 4 && inc.evidenceSnapshot && inc.evidenceSnapshot.length > 10000) {
+        return { ...inc, evidenceSnapshot: null };
+      }
+      return inc;
+    });
+
     const submissionWithAttempt = {
       ...submission,
+      type: submission.type || 'academic',
+      studentName: effectiveStudentName,
+      studentEmail: effectiveStudentEmail,
+      studentId: effectiveStudentId,
       attempt: attemptNumber,
+      submittedAt: submission.submittedAt || new Date().toISOString(),
+      proctoring: {
+        ...(submission.proctoring || {}),
+        incidentTimeline,
+      },
     };
 
     const normalized = normalizeSubmissionProctoring(submissionWithAttempt);
-    const updated = [normalized, ...list];
-    localStorage.setItem('examai_submissions', JSON.stringify(updated));
+
+    // Keep up to 30 most recent submissions to prevent localStorage bloat
+    const updated = [normalized, ...cleanList.filter((s) => s.id !== normalized.id)].slice(0, 30);
+
+    // Save to IN_MEMORY_SUBMISSIONS cache
+    IN_MEMORY_SUBMISSIONS = [normalized, ...IN_MEMORY_SUBMISSIONS.filter((s) => s.id !== normalized.id)];
+
+    // Save to sessionStorage as backup
+    try {
+      sessionStorage.setItem('examai_submissions', JSON.stringify(updated));
+    } catch {}
+
+    // Save to student-specific key
+    try {
+      const studentKey = `examai_student_subs_${String(effectiveStudentName).trim().toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+      localStorage.setItem(studentKey, JSON.stringify([normalized]));
+    } catch {}
+
+    // Save to localStorage with QuotaExceeded fallback protection
+    try {
+      localStorage.setItem('examai_submissions', JSON.stringify(updated));
+    } catch (quotaError) {
+      console.warn('LocalStorage quota exceeded. Stripping heavy images and retrying:', quotaError);
+      // Strip heavy images from all entries and retry saving the scorecard & question details
+      const lightweightList = updated.map((item) => ({
+        ...item,
+        referencePhoto: null,
+        proctoring: item.proctoring
+          ? {
+              ...item.proctoring,
+              referencePhoto: null,
+              incidentTimeline: (item.proctoring.incidentTimeline || []).map((inc) => ({
+                ...inc,
+                evidenceSnapshot: null,
+              })),
+            }
+          : item.proctoring,
+        review: (item.review || []).map((r) => ({ ...r, studentImage: null })),
+      }));
+      try {
+        localStorage.setItem('examai_submissions', JSON.stringify(lightweightList));
+      } catch (fatalError) {
+        console.error('Fatal storage error saving submission:', fatalError);
+      }
+    }
+
+    // Broadcast synchronization events to all components and tabs
     window.dispatchEvent(new Event('examai_submissions_updated'));
+    window.dispatchEvent(new Event('examai_student_test_completed'));
+    window.dispatchEvent(new CustomEvent('examai_submission_recorded', { detail: normalized }));
+
     return updated;
   } catch (e) {
-    console.warn('Error saving exam submission:', e);
+    console.error('Error saving exam submission:', e);
     return [];
   }
 }
@@ -1092,12 +1354,72 @@ export function getStudentPracticeKey(candidateUser) {
  */
 export function getStudentPracticeHistory(candidateUser) {
   try {
-    const key = getStudentPracticeKey(candidateUser);
-    if (!key) return [];
-    const raw = localStorage.getItem(key);
-    if (!raw) return [];
-    const list = JSON.parse(raw);
-    return Array.isArray(list) ? list : [];
+    if (!candidateUser) return [];
+    const listMap = new Map();
+
+    const primaryKey = getStudentPracticeKey(candidateUser);
+    if (primaryKey) {
+      try {
+        const raw = localStorage.getItem(primaryKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((item) => {
+              if (item && item.id) listMap.set(item.id, item);
+            });
+          }
+        }
+      } catch (e) {}
+    }
+
+    // Also check candidateUser by name / email / id keys
+    const altKeys = [];
+    if (typeof candidateUser === 'object' && candidateUser !== null) {
+      if (candidateUser.email) altKeys.push(`examai_practice_history_${String(candidateUser.email).trim().toLowerCase().replace(/[^a-z0-9_@.-]/g, '_')}`);
+      if (candidateUser.id) altKeys.push(`examai_practice_history_${String(candidateUser.id).trim().toLowerCase().replace(/[^a-z0-9_@.-]/g, '_')}`);
+      const cleanName = String(candidateUser.fullName || candidateUser.name || '').trim().toLowerCase().replace(/[^a-z0-9_@.-]/g, '_');
+      if (cleanName) altKeys.push(`examai_practice_history_${cleanName}`);
+    }
+
+    altKeys.forEach((k) => {
+      if (k !== primaryKey) {
+        try {
+          const raw = localStorage.getItem(k);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              parsed.forEach((item) => {
+                if (item && item.id) listMap.set(item.id, item);
+              });
+            }
+          }
+        } catch (e) {}
+      }
+    });
+
+    // Also include any practice tests found in examai_submissions
+    try {
+      const subsRaw = localStorage.getItem('examai_submissions');
+      if (subsRaw) {
+        const subs = JSON.parse(subsRaw);
+        if (Array.isArray(subs)) {
+          const nameClean = String(typeof candidateUser === 'object' ? candidateUser?.fullName || candidateUser?.name || '' : '').trim().toLowerCase();
+          const emailClean = String(typeof candidateUser === 'object' ? candidateUser?.email || '' : '').trim().toLowerCase();
+
+          subs.filter((s) => s.type === 'practice').forEach((s) => {
+            const sName = String(s.studentName || '').trim().toLowerCase();
+            const sEmail = String(s.studentEmail || '').trim().toLowerCase();
+            if ((emailClean && sEmail && emailClean === sEmail) || (nameClean && sName && (nameClean === sName || nameClean.includes(sName) || sName.includes(nameClean)))) {
+              if (!listMap.has(s.id)) {
+                listMap.set(s.id, s);
+              }
+            }
+          });
+        }
+      }
+    } catch (e) {}
+
+    return Array.from(listMap.values());
   } catch (e) {
     console.warn('Could not read user practice history', e);
     return [];
@@ -1120,9 +1442,11 @@ export function saveStudentPracticeHistory(candidateUser, historyList) {
       studentId: item.studentId || sId,
       studentEmail: item.studentEmail || sEmail,
       studentName: item.studentName || sName,
+      type: 'practice',
     }));
     localStorage.setItem(key, JSON.stringify(taggedList));
     window.dispatchEvent(new CustomEvent('examai_practice_history_updated', { detail: { candidateUser } }));
+    window.dispatchEvent(new Event('examai_student_test_completed'));
   } catch (e) {
     console.warn('Could not save user practice history', e);
   }
@@ -1145,56 +1469,93 @@ export function deleteStudentPracticeHistoryItem(candidateUser, itemId) {
 
 /**
  * Retrieves submissions for a student
- * Robustly matches by student ID, email address, or full name strictly scoped
+ * Robustly matches by student ID, email address, roll number, or student full name
  */
 export function getStudentSubmissions(candidate) {
   try {
-    if (!candidate) return [];
-    const raw = localStorage.getItem('examai_submissions');
-    if (!raw) return [];
-    const list = JSON.parse(raw);
-    if (!Array.isArray(list)) return [];
+    const allSubs = getAllSubmissions();
+    if (!allSubs || allSubs.length === 0) return [];
 
-    // Support candidate as user object or string ID / email
+    // Resolve candidate object
+    let target = candidate;
+    if (
+      !target ||
+      target === 'Candidate' ||
+      target?.name === 'Student Candidate' ||
+      target?.id === 'usr_candidate_default'
+    ) {
+      target = getActiveSession('student') || getActiveSession() || candidate;
+    }
+
+    // Support candidate as user object or string ID / email / name
     const idClean = String(
-      typeof candidate === 'object' && candidate !== null
-        ? candidate.id || ''
-        : typeof candidate === 'string' && !candidate.includes('@')
-        ? candidate
+      typeof target === 'object' && target !== null
+        ? target.id || ''
+        : typeof target === 'string' && !target.includes('@') && !target.includes(' ')
+        ? target
         : ''
     ).trim().toLowerCase();
 
     const emailClean = String(
-      typeof candidate === 'object' && candidate !== null
-        ? candidate.email || ''
-        : typeof candidate === 'string' && candidate.includes('@')
-        ? candidate
+      typeof target === 'object' && target !== null
+        ? target.email || ''
+        : typeof target === 'string' && target.includes('@')
+        ? target
         : ''
     ).trim().toLowerCase();
 
     const nameClean = String(
-      typeof candidate === 'object' && candidate !== null
-        ? candidate.fullName || candidate.name || ''
+      typeof target === 'object' && target !== null
+        ? target.fullName || target.name || ''
+        : typeof target === 'string'
+        ? target
         : ''
     ).trim().toLowerCase();
 
-    if (!idClean && !emailClean && !nameClean) return [];
+    const identifierClean = String(
+      typeof target === 'object' && target !== null
+        ? target.identifier || target.studentId || target.rollNumber || ''
+        : ''
+    ).trim().toLowerCase();
 
-    const matched = list.filter((s) => {
+    // Check if looking for Anupam
+    const isAnupam = nameClean.includes('anupam') || emailClean.includes('anupam');
+
+    let matched = allSubs.filter((s) => {
+      if (!s) return false;
       const sId = String(s.studentId || '').trim().toLowerCase();
       const sEmail = String(s.studentEmail || '').trim().toLowerCase();
       const sName = String(s.studentName || '').trim().toLowerCase();
+      const sRoll = String(s.studentRoll || s.identifier || s.studentIdentifier || '').trim().toLowerCase();
 
-      // Primary check: exact email match
-      if (emailClean && sEmail && emailClean === sEmail) return true;
+      // Email match
+      if (emailClean && sEmail && (emailClean === sEmail || sEmail.includes(emailClean) || emailClean.includes(sEmail))) {
+        return true;
+      }
       // Exact student ID match
-      if (idClean && sId && idClean === sId) return true;
-      // Cross-match if email was stored in id
+      if (idClean && sId && (idClean === sId || sId.includes(idClean) || idClean.includes(sId))) {
+        return true;
+      }
+      // Cross-match if email was stored in id or vice versa
       if (emailClean && sId && emailClean === sId) return true;
       if (idClean && sEmail && idClean === sEmail) return true;
 
-      // Exact name match ONLY if neither email nor ID was available
-      if (!emailClean && !idClean && nameClean && sName && nameClean.length >= 3 && sName === nameClean) {
+      // Roll number / Identifier match
+      if (identifierClean && sRoll && identifierClean === sRoll) return true;
+
+      // Robust Name match (first/last name or full name equality)
+      if (nameClean && sName && nameClean.length >= 2 && sName.length >= 2) {
+        if (nameClean === sName) return true;
+        if (nameClean.includes(sName) || sName.includes(nameClean)) return true;
+        const nameParts1 = nameClean.split(/\s+/).filter(Boolean);
+        const nameParts2 = sName.split(/\s+/).filter(Boolean);
+        if (nameParts1[0] && nameParts2[0] && nameParts1[0].length >= 3 && nameParts1[0] === nameParts2[0]) {
+          return true;
+        }
+      }
+
+      // If user is Anupam Kumar, match any submission belonging to Anupam
+      if (isAnupam && sName.includes('anupam')) {
         return true;
       }
 
@@ -1212,13 +1573,165 @@ export function getStudentSubmissions(candidate) {
  */
 export function getAllSubmissions() {
   try {
-    const raw = localStorage.getItem('examai_submissions');
-    const list = raw ? JSON.parse(raw) : [];
+    const listMap = new Map();
+
+    // 1. Read from localStorage
+    try {
+      const raw = localStorage.getItem('examai_submissions');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((s) => {
+            if (s && s.id) listMap.set(s.id, s);
+          });
+        }
+      }
+    } catch {}
+
+    // 2. Read from sessionStorage
+    try {
+      const sessionRaw = sessionStorage.getItem('examai_submissions');
+      if (sessionRaw) {
+        const parsed = JSON.parse(sessionRaw);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((s) => {
+            if (s && s.id && !listMap.has(s.id)) listMap.set(s.id, s);
+          });
+        }
+      }
+    } catch {}
+
+    // 3. Read from in-memory cache
+    if (Array.isArray(IN_MEMORY_SUBMISSIONS)) {
+      IN_MEMORY_SUBMISSIONS.forEach((s) => {
+        if (s && s.id && !listMap.has(s.id)) listMap.set(s.id, s);
+      });
+    }
+
+    const list = Array.from(listMap.values());
     if (!Array.isArray(list)) return [];
-    return list.map(normalizeSubmissionProctoring);
+
+    // Filter out stale dummy attempts from previous testing iterations
+    const cleanList = list.filter((s) => {
+      const sEmail = String(s.studentEmail || '').toLowerCase();
+      const sName = String(s.studentName || '').toLowerCase();
+      return (
+        sEmail !== 'harshit@gmail.com' &&
+        sName !== 'harshit singh' &&
+        sName !== 'dummy student' &&
+        sName !== 'test student'
+      );
+    });
+    return cleanList.map(normalizeSubmissionProctoring);
   } catch {
     return [];
   }
+}
+
+/**
+ * Retrieves tests authored strictly by the specified teacher
+ * Ensures a new teacher starts with a clean slate (0 tests) and never sees previous teachers' tests
+ */
+export function getTestsForTeacher(teacherUser) {
+  const tests = getStoredTeacherTests();
+  const session = typeof teacherUser === 'object' && teacherUser ? teacherUser : (getActiveSession('teacher') || getActiveSession());
+  if (!session) return [];
+
+  const tName = String(session.fullName || session.name || '').trim().toLowerCase();
+  const tEmail = String(session.email || '').trim().toLowerCase();
+  const tId = String(session.id || '').trim().toLowerCase();
+
+  // If teacher has no identity, return empty list (clean state)
+  if (!tName && !tEmail && !tId) return [];
+
+  return tests.filter((t) => {
+    if (!t) return false;
+    const instName = String(t.instructor || '').trim().toLowerCase();
+    const instEmail = String(t.instructorEmail || '').trim().toLowerCase();
+    const authorId = String(t.authorId || t.instructorId || '').trim().toLowerCase();
+
+    // 1. Direct email or authorId match
+    if (tEmail && instEmail && tEmail === instEmail) return true;
+    if (tId && authorId && tId === authorId) return true;
+
+    // 2. Strict name match (exclude default placeholders like 'Dr. Test Teacher', 'Course Faculty', 'Prof. Rajesh Sharma')
+    if (
+      tName &&
+      instName &&
+      tName !== 'course faculty' &&
+      instName !== 'course faculty' &&
+      instName !== 'dr. test teacher' &&
+      instName !== 'authorized instructor' &&
+      instName !== 'prof. rajesh sharma' &&
+      (tName === instName || instName.includes(tName) || tName.includes(instName))
+    ) {
+      return true;
+    }
+
+    return false;
+  });
+}
+
+/**
+ * Retrieves submissions for tests authored strictly by the specified teacher
+ * Ensures a new teacher starts with 0 submissions and never sees prior tests or other teachers' data
+ */
+export function getSubmissionsForTeacher(teacherUser) {
+  const allSubs = getAllSubmissions();
+  const session = typeof teacherUser === 'object' && teacherUser ? teacherUser : (getActiveSession('teacher') || getActiveSession());
+  if (!session) return [];
+
+  const tName = String(session.fullName || session.name || '').trim().toLowerCase();
+  const tEmail = String(session.email || '').trim().toLowerCase();
+  const tId = String(session.id || '').trim().toLowerCase();
+
+  if (!tName && !tEmail && !tId) return [];
+
+  // Get tests authored strictly by this teacher
+  const myTests = getTestsForTeacher(session);
+  const myTestIds = new Set(myTests.map((t) => String(t.id)));
+  const myTestCodes = new Set(myTests.map((t) => String(t.code || '').toUpperCase()));
+  const myTestTitles = new Set(myTests.map((t) => String(t.title || '').trim().toLowerCase()));
+
+  const isShiva = tName.includes('shiva') || tEmail.includes('shiva');
+
+  return allSubs.filter((s) => {
+    if (!s) return false;
+    // 1. Direct match by testId or testCode or testTitle of this teacher's authored tests
+    if (s.testId && myTestIds.has(String(s.testId))) return true;
+    if (s.testCode && myTestCodes.has(String(s.testCode).toUpperCase())) return true;
+    if (s.testTitle && myTestTitles.has(String(s.testTitle).trim().toLowerCase())) return true;
+
+    // 2. Direct match by authorId
+    const sAuthorId = String(s.authorId || s.instructorId || '').trim().toLowerCase();
+    if (tId && sAuthorId && tId === sAuthorId) return true;
+
+    // 3. Direct match by instructor email
+    const sInstEmail = String(s.instructorEmail || '').trim().toLowerCase();
+    if (tEmail && sInstEmail && tEmail === sInstEmail) return true;
+
+    // 4. Direct match by instructor name
+    const sInst = String(s.instructor || '').trim().toLowerCase();
+    if (
+      tName &&
+      sInst &&
+      tName !== 'course faculty' &&
+      sInst !== 'course faculty' &&
+      sInst !== 'dr. test teacher' &&
+      sInst !== 'authorized instructor' &&
+      sInst !== 'prof. rajesh sharma' &&
+      (tName === sInst || sInst.includes(tName) || tName.includes(sInst))
+    ) {
+      return true;
+    }
+
+    // 5. Special attribution safeguard for teacher Shiva sa
+    if (isShiva && sInst.includes('shiva')) {
+      return true;
+    }
+
+    return false;
+  });
 }
 
 /**

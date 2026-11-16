@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { getAllSubmissions, allowStudentRetake } from '../../utils/mockApi';
+import { getSubmissionsForTeacher, allowStudentRetake } from '../../utils/mockApi';
 import TeacherSubmissionReportModal from './TeacherSubmissionReportModal';
 
 /**
  * TeacherSubmissionsView
  * Educator console displaying assessment results, live integrity violations, and detailed audit timelines.
- * Designed after institutional educator portal standards.
+ * Strictly scoped to the assessments authored by the logged-in educator.
  */
-export default function TeacherSubmissionsView() {
-  const [submissions, setSubmissions] = useState(() => getAllSubmissions());
+export default function TeacherSubmissionsView({ currentTeacher }) {
+  const [submissions, setSubmissions] = useState(() => getSubmissionsForTeacher(currentTeacher));
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [retakeGrantedMap, setRetakeGrantedMap] = useState({});
@@ -23,15 +23,20 @@ export default function TeacherSubmissionsView() {
 
   useEffect(() => {
     const handleUpdate = () => {
-      setSubmissions(getAllSubmissions());
+      setSubmissions(getSubmissionsForTeacher(currentTeacher));
     };
+    handleUpdate();
     window.addEventListener('examai_submissions_updated', handleUpdate);
+    window.addEventListener('examai_student_test_completed', handleUpdate);
+    window.addEventListener('examai_submission_recorded', handleUpdate);
     window.addEventListener('storage', handleUpdate);
     return () => {
       window.removeEventListener('examai_submissions_updated', handleUpdate);
+      window.removeEventListener('examai_student_test_completed', handleUpdate);
+      window.removeEventListener('examai_submission_recorded', handleUpdate);
       window.removeEventListener('storage', handleUpdate);
     };
-  }, []);
+  }, [currentTeacher?.id, currentTeacher?.email, currentTeacher?.name]);
 
   const filtered = submissions.filter((s) => {
     const term = searchTerm.toLowerCase();

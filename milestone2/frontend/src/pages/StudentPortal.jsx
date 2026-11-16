@@ -28,8 +28,25 @@ export default function StudentPortal({ initialView = 'practice' }) {
   }, [initialView]);
 
   // Active student user resolution
-  const session = getActiveSession();
-  const allUsers = getStoredUsers();
+  const [session, setSession] = useState(() => getActiveSession('student') || getActiveSession());
+  const [allUsers, setAllUsers] = useState(() => getStoredUsers());
+
+  useEffect(() => {
+    const handleSync = () => {
+      setSession(getActiveSession('student') || getActiveSession());
+      setAllUsers(getStoredUsers());
+    };
+    window.addEventListener('storage', handleSync);
+    window.addEventListener('examai_auth_updated', handleSync);
+    window.addEventListener('examai_submissions_updated', handleSync);
+    window.addEventListener('examai_student_test_completed', handleSync);
+    return () => {
+      window.removeEventListener('storage', handleSync);
+      window.removeEventListener('examai_auth_updated', handleSync);
+      window.removeEventListener('examai_submissions_updated', handleSync);
+      window.removeEventListener('examai_student_test_completed', handleSync);
+    };
+  }, []);
 
   const candidateUser = React.useMemo(() => {
     if (session) {
@@ -45,8 +62,9 @@ export default function StudentPortal({ initialView = 'practice' }) {
           fullName: session.fullName || matched.name,
         };
       }
+      const stableFallbackId = `usr_${((session.email || '').replace(/[^a-zA-Z0-9]/g, '') || (session.fullName || session.name || 'candidate').replace(/[^a-zA-Z0-9]/g, '').toLowerCase())}`;
       return {
-        id: session.id || `usr_${(session.email || '').replace(/[^a-zA-Z0-9]/g, '') || Date.now()}`,
+        id: session.id || stableFallbackId,
         name: session.fullName || session.name || session.email || 'Candidate',
         fullName: session.fullName || session.name || session.email || 'Candidate',
         email: session.email || '',
@@ -58,13 +76,13 @@ export default function StudentPortal({ initialView = 'practice' }) {
       };
     }
     return {
-      id: 'usr_002',
-      name: 'test student',
-      fullName: 'test student',
-      email: 'teststudent@gmail.com',
-      identifier: '24HG-8812',
-      department: 'Mathematics',
-      college: 'Metro State University',
+      id: 'usr_candidate_default',
+      name: 'Student Candidate',
+      fullName: 'Student Candidate',
+      email: '',
+      identifier: 'STU-DEMO',
+      department: 'Computer Science',
+      college: 'Institutional Student',
       role: 'student',
       status: 'approved',
     };

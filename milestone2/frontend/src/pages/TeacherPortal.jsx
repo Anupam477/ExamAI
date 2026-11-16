@@ -26,10 +26,23 @@ export default function TeacherPortal({ initialView = 'create-test' }) {
   const [theme, setTheme] = useState('light');
   const [toastMessage, setToastMessage] = useState(null);
 
-  // Active educator session
-  const session = getActiveSession();
+  // Active educator session state
+  const [session, setSession] = useState(() => getActiveSession('teacher') || getActiveSession());
+
+  useEffect(() => {
+    const handleSync = () => {
+      setSession(getActiveSession('teacher') || getActiveSession());
+    };
+    window.addEventListener('storage', handleSync);
+    window.addEventListener('examai_auth_updated', handleSync);
+    return () => {
+      window.removeEventListener('storage', handleSync);
+      window.removeEventListener('examai_auth_updated', handleSync);
+    };
+  }, []);
+
   const teacherName = session?.fullName || session?.name || 'Course Faculty';
-  const teacherRole = session?.roleTitle || session?.subDetails || session?.department || 'Course Faculty';
+  const teacherRole = session?.roleTitle || session?.subDetails || session?.department || 'Department of Computer Science';
   const teacherInitials = (teacherName || 'CF')
     .replace(/^(Dr\.|Prof\.|Mr\.|Ms\.)\s*/i, '')
     .trim()
@@ -41,8 +54,12 @@ export default function TeacherPortal({ initialView = 'create-test' }) {
     .toUpperCase() || 'CF';
 
   const activeUser = {
+    id: session?.id || '',
+    email: session?.email || '',
     name: teacherName,
+    fullName: teacherName,
     roleTitle: teacherRole,
+    department: session?.department || 'Computer Science',
     initials: teacherInitials,
   };
 
@@ -283,6 +300,7 @@ export default function TeacherPortal({ initialView = 'create-test' }) {
 
           {currentTab === 'tests' && (
             <TeacherTestsList
+              currentTeacher={activeUser}
               onCreateNew={handleCreateNewTest}
               onEditTest={handleEditTest}
               onDirectPublish={handleDirectPublish}
@@ -291,17 +309,18 @@ export default function TeacherPortal({ initialView = 'create-test' }) {
 
           {currentTab === 'dashboard' && (
             <TeacherDashboardView
+              currentTeacher={activeUser}
               onNavigateToCreate={handleCreateNewTest}
               onNavigateToTests={() => setCurrentTab('tests')}
             />
           )}
 
           {currentTab === 'students' && (
-            <TeacherStudentsView />
+            <TeacherStudentsView currentTeacher={activeUser} />
           )}
 
           {currentTab === 'submissions' && (
-            <TeacherSubmissionsView />
+            <TeacherSubmissionsView currentTeacher={activeUser} />
           )}
         </div>
       </div>

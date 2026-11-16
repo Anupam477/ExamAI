@@ -9,10 +9,20 @@ export default function StepAssignStudents({ formData, onChange, onNext, onBack,
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('all');
 
-  // Load registered students
+  // Load registered students (excluding legacy mock placeholders)
   const allStudents = useMemo(() => {
     const users = getStoredUsers();
-    return users.filter((u) => u.role === 'student' && u.active);
+    return users.filter(
+      (u) =>
+        u.role === 'student' &&
+        u.active &&
+        u.id !== 'usr_001' &&
+        u.id !== 'usr_002' &&
+        u.email !== 'dummystudent@gmail.com' &&
+        u.email !== 'teststudent@gmail.com' &&
+        u.name !== 'Dummy Student' &&
+        u.name !== 'Test Student'
+    );
   }, []);
 
   const assigned = formData.assignedStudents || [];

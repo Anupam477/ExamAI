@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   getStoredTeacherTests,
+  getTestsForTeacher,
   deleteTeacherTest,
   rescheduleTeacherTest,
   saveOrUpdateTeacherTest,
@@ -11,8 +12,8 @@ import {
  * Teacher Tests List Console
  * Shows all active, published, and draft examination papers
  */
-export default function TeacherTestsList({ onCreateNew, onEditTest, onDirectPublish }) {
-  const [tests, setTests] = useState(getStoredTeacherTests());
+export default function TeacherTestsList({ currentTeacher, onCreateNew, onEditTest, onDirectPublish }) {
+  const [tests, setTests] = useState(() => getTestsForTeacher(currentTeacher));
   const [filter, setFilter] = useState('all');
   const [copiedId, setCopiedId] = useState(null);
   const [reschedulingTest, setReschedulingTest] = useState(null);
@@ -36,7 +37,7 @@ export default function TeacherTestsList({ onCreateNew, onEditTest, onDirectPubl
     const confirmMsg = `Re-assign "${test.title}" to ${studentCount > 0 ? `${studentCount} enrolled candidates` : 'all eligible students'}?\n\nCandidates who already completed this exam will immediately be granted a fresh attempt to take it again (even without modifying questions).`;
     if (window.confirm(confirmMsg)) {
       const updated = reassignTeacherTest(test.id);
-      setTests(updated);
+      setTests(getTestsForTeacher(currentTeacher));
       setSaveSuccessMsg(`✓ Test "${test.title}" RE-ASSIGNED successfully! Candidates can now take this examination again.`);
       setTimeout(() => setSaveSuccessMsg(null), 4000);
     }
@@ -45,7 +46,7 @@ export default function TeacherTestsList({ onCreateNew, onEditTest, onDirectPubl
   // Sync tests on changes
   useEffect(() => {
     const handleSync = () => {
-      setTests(getStoredTeacherTests());
+      setTests(getTestsForTeacher(currentTeacher));
     };
     window.addEventListener('examai_tests_updated', handleSync);
     window.addEventListener('storage', handleSync);
@@ -53,12 +54,12 @@ export default function TeacherTestsList({ onCreateNew, onEditTest, onDirectPubl
       window.removeEventListener('examai_tests_updated', handleSync);
       window.removeEventListener('storage', handleSync);
     };
-  }, []);
+  }, [currentTeacher]);
 
   const handlePublishClick = (test) => {
     const updatedTest = { ...test, status: 'published' };
-    const updated = saveOrUpdateTeacherTest(updatedTest);
-    setTests(updated);
+    saveOrUpdateTeacherTest(updatedTest);
+    setTests(getTestsForTeacher(currentTeacher));
     if (onDirectPublish) {
       onDirectPublish(test);
     } else {
@@ -68,8 +69,8 @@ export default function TeacherTestsList({ onCreateNew, onEditTest, onDirectPubl
   };
 
   const handleRevertToDraft = (test) => {
-    const updated = saveOrUpdateTeacherTest({ ...test, status: 'draft' });
-    setTests(updated);
+    saveOrUpdateTeacherTest({ ...test, status: 'draft' });
+    setTests(getTestsForTeacher(currentTeacher));
     setSaveSuccessMsg(`Test "${test.title}" reverted back to Draft status.`);
     setTimeout(() => setSaveSuccessMsg(null), 2500);
   };
@@ -108,8 +109,8 @@ export default function TeacherTestsList({ onCreateNew, onEditTest, onDirectPubl
       status: andPublish ? 'published' : quickAddTest.status,
     };
 
-    const updated = saveOrUpdateTeacherTest(updatedTest);
-    setTests(updated);
+    saveOrUpdateTeacherTest(updatedTest);
+    setTests(getTestsForTeacher(currentTeacher));
 
     const msg = andPublish
       ? `✓ Added question and PUBLISHED "${quickAddTest.title}" (Code: ${quickAddTest.code})!`
@@ -126,8 +127,8 @@ export default function TeacherTestsList({ onCreateNew, onEditTest, onDirectPubl
 
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this test?')) {
-      const updated = deleteTeacherTest(id);
-      setTests(updated);
+      deleteTeacherTest(id);
+      setTests(getTestsForTeacher(currentTeacher));
     }
   };
 

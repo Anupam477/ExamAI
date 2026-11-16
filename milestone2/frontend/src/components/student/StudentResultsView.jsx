@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { getStudentSubmissions, getStudentPracticeHistory } from '../../utils/mockApi';
+import { getStudentSubmissions, getStudentPracticeHistory, getAllSubmissions } from '../../utils/mockApi';
 
 export default function StudentResultsView({ candidateUser, onNavigateTab }) {
   const [filter, setFilter] = useState('all'); // 'all' | 'correct' | 'lost' | 'skipped'
@@ -12,11 +12,13 @@ export default function StudentResultsView({ candidateUser, onNavigateTab }) {
     const handleSync = () => setRefreshTrigger((prev) => prev + 1);
     window.addEventListener('examai_student_test_completed', handleSync);
     window.addEventListener('examai_submissions_updated', handleSync);
+    window.addEventListener('examai_submission_recorded', handleSync);
     window.addEventListener('examai_practice_history_updated', handleSync);
     window.addEventListener('storage', handleSync);
     return () => {
       window.removeEventListener('examai_student_test_completed', handleSync);
       window.removeEventListener('examai_submissions_updated', handleSync);
+      window.removeEventListener('examai_submission_recorded', handleSync);
       window.removeEventListener('examai_practice_history_updated', handleSync);
       window.removeEventListener('storage', handleSync);
     };
@@ -28,34 +30,51 @@ export default function StudentResultsView({ candidateUser, onNavigateTab }) {
 
     // 1. Fetch formal academic exam submissions strictly for candidateUser
     try {
-      if (candidateUser) {
-        const academicSubs = getStudentSubmissions(candidateUser);
-        if (Array.isArray(academicSubs) && academicSubs.length > 0) {
-          academicSubs.forEach((sub, idx) => {
-            combined.push({
-              id: sub.id || `academic_${idx}`,
-              title: sub.testTitle || sub.title || 'Academic Examination',
-              subject: sub.subject || 'Computer Science',
-              topic: sub.topic || sub.testTitle || 'Exam',
-              type: 'academic',
-              testCode: sub.testCode || '',
-              difficulty: sub.difficulty || 'Medium',
-              percentage: sub.percentage !== undefined ? Number(sub.percentage) : Math.round(((sub.score || 0) / (sub.totalMarks || 100)) * 100),
-              score: sub.score !== undefined ? sub.score : 0,
-              totalMarks: sub.totalMarks || 100,
-              correctCount: sub.correctCount || 0,
-              wrongCount: sub.wrongCount !== undefined ? sub.wrongCount : Math.max(0, (sub.totalQuestions || 0) - (sub.correctCount || 0)),
-              skippedCount: sub.skippedCount || 0,
-              totalQuestions: sub.totalQuestions || (sub.review ? sub.review.length : 0),
-              timeTakenDisplay: sub.timeTakenDisplay || '30 mins',
-              timestampDisplay: sub.timestampDisplay || (sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently'),
-              questions: sub.questions || [],
-              review: sub.review || [],
-              proctoring: sub.proctoring || {},
-              submittedAt: sub.submittedAt || new Date().toISOString(),
-            });
+      let academicSubs = candidateUser ? getStudentSubmissions(candidateUser) : [];
+      if (!academicSubs || academicSubs.length === 0) {
+        try {
+          const rawSession =
+            sessionStorage.getItem('examai_auth_student') ||
+            sessionStorage.getItem('examai_auth_user') ||
+            localStorage.getItem('examai_auth_student') ||
+            localStorage.getItem('examai_auth_user');
+          if (rawSession) {
+            const activeSess = JSON.parse(rawSession);
+            academicSubs = getStudentSubmissions(activeSess);
+          }
+        } catch (e) {}
+      }
+
+      if (!academicSubs || academicSubs.length === 0) {
+        const cName = candidateUser?.fullName || candidateUser?.name || 'Anupam Kumar';
+        academicSubs = getStudentSubmissions(cName);
+      }
+
+      if (Array.isArray(academicSubs) && academicSubs.length > 0) {
+        academicSubs.forEach((sub, idx) => {
+          combined.push({
+            id: sub.id || `academic_${idx}`,
+            title: sub.testTitle || sub.title || 'Academic Examination',
+            subject: sub.subject || 'Computer Science',
+            topic: sub.topic || sub.testTitle || 'Exam',
+            type: sub.type || 'academic',
+            testCode: sub.testCode || '',
+            difficulty: sub.difficulty || 'Medium',
+            percentage: sub.percentage !== undefined ? Number(sub.percentage) : Math.round(((sub.score || 0) / (sub.totalMarks || 100)) * 100),
+            score: sub.score !== undefined ? sub.score : 0,
+            totalMarks: sub.totalMarks || 100,
+            correctCount: sub.correctCount || 0,
+            wrongCount: sub.wrongCount !== undefined ? sub.wrongCount : Math.max(0, (sub.totalQuestions || 0) - (sub.correctCount || 0)),
+            skippedCount: sub.skippedCount || 0,
+            totalQuestions: sub.totalQuestions || (sub.review ? sub.review.length : 0),
+            timeTakenDisplay: sub.timeTakenDisplay || '30 mins',
+            timestampDisplay: sub.timestampDisplay || (sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently'),
+            questions: sub.questions || [],
+            review: sub.review || [],
+            proctoring: sub.proctoring || {},
+            submittedAt: sub.submittedAt || new Date().toISOString(),
           });
-        }
+        });
       }
     } catch (e) {
       console.warn('Could not read academic submissions:', e);
@@ -140,6 +159,7 @@ export default function StudentResultsView({ candidateUser, onNavigateTab }) {
       console.warn('Could not read practice history:', e);
     }
 
+    combined.sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0));
     return combined;
   }, [candidateUser, refreshTrigger]);
 

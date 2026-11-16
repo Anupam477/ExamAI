@@ -91,6 +91,9 @@ export default function Login({ roleOverride }) {
           };
           sessionStorage.setItem('examai_auth_user', JSON.stringify(sessionUser));
           localStorage.setItem('examai_auth_user', JSON.stringify(sessionUser));
+          sessionStorage.setItem(`examai_auth_${userRole}`, JSON.stringify(sessionUser));
+          localStorage.setItem(`examai_auth_${userRole}`, JSON.stringify(sessionUser));
+          window.dispatchEvent(new Event('examai_auth_updated'));
 
           // Auto-redirect to designated workspace
           setTimeout(() => {
@@ -179,6 +182,9 @@ export default function Login({ roleOverride }) {
           };
           sessionStorage.setItem('examai_auth_user', JSON.stringify(sessionUser));
           localStorage.setItem('examai_auth_user', JSON.stringify(sessionUser));
+          sessionStorage.setItem(`examai_auth_${userRole}`, JSON.stringify(sessionUser));
+          localStorage.setItem(`examai_auth_${userRole}`, JSON.stringify(sessionUser));
+          window.dispatchEvent(new Event('examai_auth_updated'));
           setTimeout(() => navigate(`/dashboard/${userRole}`), 600);
         } else if (latestUser?.status === 'rejected') {
           setAdmissionState({
