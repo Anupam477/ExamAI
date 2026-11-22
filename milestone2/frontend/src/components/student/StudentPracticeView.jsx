@@ -206,7 +206,7 @@ export default function StudentPracticeView({ candidateUser, onShowToast, onNavi
       {/* Top Banner & Overview matching screenshot */}
       <div className="practice-header-section">
         <div className="practice-pill-tag">PRACTICE</div>
-        <h1 className="practice-page-title">Practise anything, anytime</h1>
+        <h1 className="practice-page-title">Practice anything, anytime</h1>
         <p className="practice-page-desc">
           Generate a fresh AI test on any topic. Practice tests are graded instantly and never shared with teachers.
         </p>
